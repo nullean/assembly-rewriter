@@ -1,6 +1,6 @@
 # AssemblyRewriter
 
-Rewrites assemblies with [Mono.Cecil](https://www.mono-project.com/docs/tools+libraries/libraries/Mono.Cecil/), to allow two different versions of the same assembly to be referenced within an application.
+Rewrites .NET assemblies with [Mono.Cecil](https://www.mono-project.com/docs/tools+libraries/libraries/Mono.Cecil/), to allow two different versions of the same assembly to be referenced within an application.
  
 It assumes that the assembly DLL name is the top level namespace and rewrites
 
