@@ -2,7 +2,7 @@
 
 namespace AssemblyRewriter
 {
-    class AssemblyToRewrite
+    internal class AssemblyToRewrite
     {
         private string _inputName;
         private string _outputName;
@@ -13,7 +13,7 @@ namespace AssemblyRewriter
             InputPath = Path.GetFullPath(inputPath);
             OutputPath = Path.GetFullPath(outputPath);
         }
-        
+
         public string InputPath { get; }
 
         public string InputDirectory => _inputDirectory ?? (_inputDirectory = Path.GetDirectoryName(InputPath));
@@ -21,9 +21,9 @@ namespace AssemblyRewriter
         public string InputName => _inputName ?? (_inputName = Path.GetFileNameWithoutExtension(InputPath));
 
         public string OutputName => _outputName ?? (_outputName = Path.GetFileNameWithoutExtension(OutputPath));
-        
+
         public string OutputPath { get; }
-        
+
         public bool Rewritten { get; set; }
     }
 }

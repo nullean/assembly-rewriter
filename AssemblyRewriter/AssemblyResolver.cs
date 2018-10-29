@@ -6,11 +6,11 @@ using Mono.Cecil;
 
 namespace AssemblyRewriter
 {
-    class AssemblyResolver : DefaultAssemblyResolver
+    internal class AssemblyResolver : DefaultAssemblyResolver
     {
         private readonly IEnumerable<string> _directories;
 
-        public AssemblyResolver(IEnumerable<string> directories) => 
+        public AssemblyResolver(IEnumerable<string> directories) =>
             _directories = new HashSet<string>(directories.Select(Path.GetFullPath), StringComparer.OrdinalIgnoreCase);
 
         public override AssemblyDefinition Resolve(AssemblyNameReference name)
