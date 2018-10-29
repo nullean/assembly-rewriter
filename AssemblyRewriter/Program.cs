@@ -1,5 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using ILRepacking;
 using Mono.Options;
 
 namespace AssemblyRewriter
@@ -10,6 +14,8 @@ namespace AssemblyRewriter
         private static readonly List<string> OutputPaths = new List<string>();
         private static bool _help;
         private static bool _verbose;
+        private static bool _merge;
+        private static string _keyFile;
 
         private static int Main(string[] args)
         {
@@ -17,6 +23,8 @@ namespace AssemblyRewriter
             {
                 {"i|in=", "input {path} for assembly to rewrite. Use multiple flags for multiple input paths", i => InputPaths.Add(i)},
                 {"o|out=", "output {path} for rewritten assembly. Use multiple flags for multiple output paths", o => OutputPaths.Add(o)},
+                {"m|merge", "merge all output dlls to a single dll using the first output path as target", p => _merge = p != null},
+                {"k|keyFile=", "resign merged dll with this keyFile", p => _keyFile = p},
                 {"v|verbose", "verbose output", v => _verbose = v != null},
                 {"h|?|help", "show this message and exit", h => _help = h != null},
             };
@@ -74,7 +82,6 @@ namespace AssemblyRewriter
             {
                 var rewriter = new AssemblyRewriter(_verbose);
                 rewriter.RewriteNamespaces(InputPaths, OutputPaths);
-                return 0;
             }
             catch (Exception e)
             {
@@ -82,6 +89,33 @@ namespace AssemblyRewriter
                 Console.WriteLine(e);
                 return 1;
             }
+
+            if (!_merge) return 0;
+            try
+            {
+                var repackOptions = new ILRepacking.RepackOptions
+                {
+                    Internalize = true,
+                    Closed = true,
+                    KeepOtherVersionReferences = false,
+                    TargetKind = ILRepack.Kind.SameAsPrimaryAssembly,
+                    InputAssemblies = OutputPaths.ToArray(),
+                    //LineIndexation = true //https://github.com/gluck/il-repack/blob/96cd4ecf7a0f68e5dadd0a04c774f57e9c46cb56/ILRepack/IKVMLineIndexer.cs
+                    OutputFile = OutputPaths.First(),
+                    KeyFile = _keyFile,
+                    SearchDirectories = OutputPaths.Select(p=> new DirectoryInfo(p).FullName).Distinct()
+                };
+
+                var pack = new ILRepacking.ILRepack(repackOptions, new RepackConsoleLogger());
+                pack.Repack();
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(e);
+                return 2;
+            }
+            return 0;
         }
 
         private static void ShowHelp(OptionSet options)
