@@ -74,6 +74,7 @@ namespace AssemblyRewriter
             {
                 var rewriter = new AssemblyRewriter(_verbose);
                 rewriter.RewriteNamespaces(InputPaths, OutputPaths);
+                return 0;
             }
             catch (Exception e)
             {
@@ -81,7 +82,6 @@ namespace AssemblyRewriter
                 Console.WriteLine(e);
                 return 1;
             }
-            return 0;
         }
 
         private static void ShowHelp(OptionSet options)
