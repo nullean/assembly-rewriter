@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Mono.Cecil;
@@ -23,7 +24,9 @@ namespace AssemblyRewriter
             var readerParameters = new ReaderParameters { AssemblyResolver = resolver, ReadWrite = true };
 
             foreach (var assembly in assemblies)
+            {
                 RewriteAssembly(assembly, assemblies, readerParameters);
+            }
         }
 
         private void RewriteAttributes(string assembly, IEnumerable<CustomAttribute> attributes,
@@ -92,9 +95,11 @@ namespace AssemblyRewriter
             if (assemblyToRewrite.Rewritten)
                 return;
 
+            string tempOutputPath = null;
+            string currentName = null;
             using (var assembly = AssemblyDefinition.ReadAssembly(assemblyToRewrite.InputPath, readerParameters))
             {
-                var currentName = assembly.Name.Name;
+                currentName = assembly.Name.Name;
                 var newName = assemblyToRewrite.OutputName;
 
                 Write(currentName, nameof(AssemblyDefinition), $"rewriting {currentName} from {assemblyToRewrite.InputPath}");
@@ -144,11 +149,25 @@ namespace AssemblyRewriter
 
                 RewriteAssemblyTitleAttribute(assembly, currentName, newName);
                 assembly.Name.Name = newName;
-                assembly.Write(assemblyToRewrite.OutputPath);
-                assemblyToRewrite.Rewritten = true;
-
-                Write(currentName, nameof(AssemblyDefinition),
-                    $"finished rewriting {currentName} into {assemblyToRewrite.OutputPath}");
+                if (assemblyToRewrite.OutputPath == assemblyToRewrite.InputPath)
+                {
+                    tempOutputPath = assemblyToRewrite.OutputPath + ".temp";
+                    assembly.Write(tempOutputPath);
+                    assemblyToRewrite.Rewritten = true;
+                    Write(currentName, nameof(AssemblyDefinition), $"finished rewriting {currentName} into {tempOutputPath}");
+                }
+                else
+                {
+                    assembly.Write(assemblyToRewrite.OutputPath);
+                    assemblyToRewrite.Rewritten = true;
+                    Write(currentName, nameof(AssemblyDefinition), $"finished rewriting {currentName} into {assemblyToRewrite.OutputPath}");
+                }
+            }
+            if (!string.IsNullOrWhiteSpace(tempOutputPath))
+            {
+                System.IO.File.Delete(assemblyToRewrite.OutputPath);
+                System.IO.File.Move(tempOutputPath, assemblyToRewrite.OutputPath);
+                Write(currentName, nameof(AssemblyDefinition), $"Rename {tempOutputPath} back to {assemblyToRewrite.OutputPath}");
             }
 
         }
@@ -376,6 +395,7 @@ namespace AssemblyRewriter
                  case nameof(AssemblyDefinition):
                  case nameof(AssemblyNameReference):
                  case nameof(AssemblyTitleAttribute):
+                 case nameof(RewriteNamespaces):
                     Write();
                     break;
                  default:
