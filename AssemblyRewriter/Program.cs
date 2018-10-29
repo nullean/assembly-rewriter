@@ -10,6 +10,7 @@ namespace AssemblyRewriter
         private static readonly List<string> OutputPaths = new List<string>();
         private static bool _help;
         private static bool _verbose;
+        private static string _mergePath;
 
         private static int Main(string[] args)
         {
@@ -17,6 +18,7 @@ namespace AssemblyRewriter
             {
                 {"i|in=", "input {path} for assembly to rewrite. Use multiple flags for multiple input paths", i => InputPaths.Add(i)},
                 {"o|out=", "output {path} for rewritten assembly. Use multiple flags for multiple output paths", o => OutputPaths.Add(o)},
+                {"m|merge=", "merge all output dlls to a single dll under this path", p => _mergePath = p},
                 {"v|verbose", "verbose output", v => _verbose = v != null},
                 {"h|?|help", "show this message and exit", h => _help = h != null},
             };
@@ -98,3 +100,4 @@ namespace AssemblyRewriter
         }
     }
 }
+
