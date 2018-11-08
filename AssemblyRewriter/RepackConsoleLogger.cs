@@ -34,10 +34,7 @@ namespace AssemblyRewriter
             return ConsoleColor.Gray;
         }
 
-        public void Log(object str)
-        {
-            this.Write(nameof(this.Log), str.ToString());
-        }
+        public void Log(object str) => this.Write(nameof(this.Log), str.ToString());
 
         public void Error(string msg) => this.Write(nameof(this.Error), msg);
 
