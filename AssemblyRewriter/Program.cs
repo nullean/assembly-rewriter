@@ -89,32 +89,6 @@ namespace AssemblyRewriter
                 Console.WriteLine(e);
                 return 1;
             }
-
-            if (!_merge) return 0;
-            try
-            {
-                var repackOptions = new ILRepacking.RepackOptions
-                {
-                    Internalize = true,
-                    Closed = true,
-                    KeepOtherVersionReferences = false,
-                    TargetKind = ILRepack.Kind.SameAsPrimaryAssembly,
-                    InputAssemblies = OutputPaths.ToArray(),
-                    //LineIndexation = true //https://github.com/gluck/il-repack/blob/96cd4ecf7a0f68e5dadd0a04c774f57e9c46cb56/ILRepack/IKVMLineIndexer.cs
-                    OutputFile = OutputPaths.First(),
-                    KeyFile = _keyFile,
-                    SearchDirectories = OutputPaths.Select(p=> new DirectoryInfo(p).FullName).Distinct()
-                };
-
-                var pack = new ILRepacking.ILRepack(repackOptions, new RepackConsoleLogger());
-                pack.Repack();
-            }
-            catch (Exception e)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(e);
-                return 2;
-            }
             return 0;
         }
 
