@@ -12,23 +12,20 @@ namespace AssemblyRewriter
     {
         private readonly bool _verbose;
 
-        public AssemblyRewriter(bool verbose)
-        {
-            _verbose = verbose;
-        }
-        
+        public AssemblyRewriter(bool verbose) => _verbose = verbose;
+
         public void RewriteNamespaces(IEnumerable<string> inputPaths, IEnumerable<string> outputPaths)
         {
             var assemblies = inputPaths.Zip(outputPaths,
                 (inputPath, outputPath) => new AssemblyToRewrite(inputPath, outputPath)).ToList();
-            
+
             var resolver = new AssemblyResolver(assemblies.Select(a => a.InputDirectory));
             var readerParameters = new ReaderParameters { AssemblyResolver = resolver, ReadWrite = true };
 
             foreach (var assembly in assemblies)
                 RewriteAssembly(assembly, assemblies, readerParameters);
         }
-        
+
         private void RewriteAttributes(string assembly, IEnumerable<CustomAttribute> attributes,
             string currentName, string newName)
         {
@@ -36,7 +33,7 @@ namespace AssemblyRewriter
             {
                 RewriteTypeReference(assembly, attribute.AttributeType, currentName, newName);
                 RewriteMemberReference(assembly, attribute.Constructor, currentName, newName);
-                
+
                 if (attribute.HasConstructorArguments)
                 {
                     foreach (var constructorArgument in attribute.ConstructorArguments)
@@ -54,7 +51,7 @@ namespace AssemblyRewriter
                     foreach (var property in attribute.Properties)
                         RewriteTypeReference(assembly, property.Argument.Type, currentName, newName);
                 }
-                
+
                 if (attribute.HasFields)
                 {
                     foreach (var field in attribute.Fields)
@@ -65,7 +62,7 @@ namespace AssemblyRewriter
 
         private void RewriteMemberReference(string assembly, MemberReference memberReference, string currentName, string newName)
         {
-            if (memberReference.Name.StartsWith($"{currentName}.") || 
+            if (memberReference.Name.StartsWith($"{currentName}.") ||
                 memberReference.Name.StartsWith($"<{currentName}."))
             {
                 var name = memberReference.Name.Replace($"{currentName}.", $"{newName}.");
@@ -73,7 +70,7 @@ namespace AssemblyRewriter
                 memberReference.Name = name;
             }
         }
-        
+
         private void RewriteGenericParameter(string assembly, GenericParameter genericParameter, string currentName, string newName)
         {
             foreach (var genericParameterConstraint in genericParameter.Constraints)
@@ -85,11 +82,11 @@ namespace AssemblyRewriter
                     genericParameterConstraint.Name = name;
                 }
             }
-            
+
             foreach (var nestedGenericParameter in genericParameter.GenericParameters)
                 RewriteGenericParameter(assembly, nestedGenericParameter, currentName, newName);
         }
-        
+
         private void RewriteAssembly(AssemblyToRewrite assemblyToRewrite, List<AssemblyToRewrite> assembliesToRewrite, ReaderParameters readerParameters)
         {
             if (assemblyToRewrite.Rewritten)
@@ -178,7 +175,7 @@ namespace AssemblyRewriter
                         $"{typeReference.FullName} to {typeReference.FullName.Replace(currentName + ".", newName + ".")}");
                     typeReference.Namespace = name;
                 }
-                
+
                 if (typeReference.Name.StartsWith($"<{currentName}-"))
                 {
                     var name = typeReference.Name.Replace($"<{currentName}-", $"<{newName}-");
@@ -203,9 +200,9 @@ namespace AssemblyRewriter
                     // give the assembly a new title, even when the top level namespace is not part of it
                     if (newAssemblyName == currentAssemblyName)
                         newAssemblyName += $" ({newName})";
-                    
+
                     Write(assembly.Name.Name, nameof(AssemblyTitleAttribute), $"{currentAssemblyName} to {newAssemblyName}");
-                    attribute.ConstructorArguments[0] = 
+                    attribute.ConstructorArguments[0] =
                         new CustomAttributeArgument(assembly.MainModule.TypeSystem.String, newAssemblyName);
                 }
             }
@@ -217,7 +214,7 @@ namespace AssemblyRewriter
             {
                 if (typeDefinition.HasNestedTypes)
                     RewriteTypes(assembly, typeDefinition.NestedTypes, currentName, newName);
-                
+
                 if (typeDefinition.Namespace.StartsWith(currentName) &&
                     !typeDefinition.Namespace.StartsWith(newName))
                 {
@@ -225,23 +222,23 @@ namespace AssemblyRewriter
                     Write(assembly, nameof(TypeDefinition), $"{typeDefinition.FullName} to {name}.{typeDefinition.Name}");
                     typeDefinition.Namespace = name;
                 }
-                
+
                 RewriteAttributes(assembly, typeDefinition.CustomAttributes, currentName, newName);
-                
+
                 foreach (var methodDefinition in typeDefinition.Methods)
                 {
                     RewriteMethodDefinition(assembly, methodDefinition, currentName, newName);
                 }
-                
+
                 foreach (var propertyDefinition in typeDefinition.Properties)
                 {
                     RewriteAttributes(assembly, propertyDefinition.CustomAttributes, currentName, newName);
-                    RewriteMemberReference(assembly, propertyDefinition, currentName, newName); 
-                    
+                    RewriteMemberReference(assembly, propertyDefinition, currentName, newName);
+
                     if (propertyDefinition.Name.Contains($"<{currentName}."))
                     {
                         var name = propertyDefinition.Name.Replace($"<{currentName}.", $"<{newName}.");
-                        Write(assembly, nameof(PropertyDefinition), $"{propertyDefinition.Name} to {name}");               
+                        Write(assembly, nameof(PropertyDefinition), $"{propertyDefinition.Name} to {name}");
                         propertyDefinition.Name = name;
                     }
                 }
@@ -254,7 +251,7 @@ namespace AssemblyRewriter
 
                 foreach (var interfaceImplementation in typeDefinition.Interfaces)
                 {
-                    RewriteAttributes(assembly, interfaceImplementation.CustomAttributes, currentName, newName);                   
+                    RewriteAttributes(assembly, interfaceImplementation.CustomAttributes, currentName, newName);
                     RewriteMemberReference(assembly, interfaceImplementation.InterfaceType, currentName, newName);
                 }
 
@@ -284,10 +281,10 @@ namespace AssemblyRewriter
                 if (methodDefinition.Name.Contains("<" + currentName))
                 {
                     var name = methodDefinition.Name.Replace($"<{currentName}", $"<{newName}");
-                    Write(assembly, nameof(MethodDefinition), $"{methodDefinition.Name} to {name}");               
+                    Write(assembly, nameof(MethodDefinition), $"{methodDefinition.Name} to {name}");
                     methodDefinition.Name = name;
                 }
-                
+
                 foreach (var genericParameter in methodDefinitionOverride.GenericParameters)
                 {
                     RewriteAttributes(assembly, genericParameter.CustomAttributes, currentName, newName);
@@ -320,7 +317,7 @@ namespace AssemblyRewriter
                 for (var index = 0; index < methodDefinition.Body.Instructions.Count; index++)
                 {
                     var instruction = methodDefinition.Body.Instructions[index];
-                    
+
                     // Strings that reference the namespace
                     if (instruction.OpCode.Code == Code.Ldstr)
                     {
@@ -336,7 +333,7 @@ namespace AssemblyRewriter
                     {
                         var fieldReference = (FieldReference) instruction.Operand;
                         RewriteMemberReference(assembly, fieldReference, currentName, newName);
-                        
+
                         // Some generated fields start with {namespace}
                         RewriteTypeReference(assembly, fieldReference.DeclaringType, currentName, newName);
                     }
@@ -347,7 +344,7 @@ namespace AssemblyRewriter
 
                         if (methodReference.IsGenericInstance)
                         {
-                            var genericInstance = (GenericInstanceMethod) methodReference;                          
+                            var genericInstance = (GenericInstanceMethod) methodReference;
                             RewriteTypeReferences(assembly, genericInstance.GenericArguments, currentName, newName);
                         }
                     }
