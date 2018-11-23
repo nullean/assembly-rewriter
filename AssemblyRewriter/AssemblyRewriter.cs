@@ -254,6 +254,11 @@ namespace AssemblyRewriter
                     RewriteAttributes(assembly, propertyDefinition.CustomAttributes, currentName, newName);
                     RewriteMemberReference(assembly, propertyDefinition, currentName, newName);
 
+                    if (propertyDefinition.GetMethod != null)
+                        RewriteMethodDefinition(assembly, propertyDefinition.GetMethod, currentName, newName);
+                    if (propertyDefinition.SetMethod != null)
+                        RewriteMethodDefinition(assembly, propertyDefinition.SetMethod, currentName, newName);
+
                     if (propertyDefinition.Name.Contains($"<{currentName}."))
                     {
                         var name = propertyDefinition.Name.Replace($"<{currentName}.", $"<{newName}.");
