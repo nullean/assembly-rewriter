@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Xml.Schema;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -41,6 +42,7 @@ namespace AssemblyRewriter
                 {
                     foreach (var constructorArgument in attribute.ConstructorArguments)
                     {
+                        RewriteTypeReference(assembly, constructorArgument.Type, currentName, newName);
                         if (constructorArgument.Type.Name == nameof(Type))
                         {
                             // intentional no-op, but required for Cecil
