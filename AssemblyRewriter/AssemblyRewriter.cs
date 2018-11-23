@@ -203,8 +203,11 @@ namespace AssemblyRewriter
 //            );
 //
 //            if (doNotRewrite) return;
+            if (typeReference == null) return;
 
             if (typeReference is TypeSpecification) typeReference = typeReference.GetElementType();
+
+            if (typeReference == null) return;
 
             if (typeReference.Namespace != string.Empty)
             {
