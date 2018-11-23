@@ -38,6 +38,8 @@ namespace AssemblyRewriter
             replace = replace ?? ((t, o, n) => t.Replace(o, n));
             foreach (var rename in _renames)
             {
+                //safeguard e.g Nest7 to be renamed to Nest77
+                if (typeName.StartsWith(rename.Value)) continue;
                 var n = replace(typeName, rename.Key, rename.Value);
                 if (typeName != n) return n;
             }
