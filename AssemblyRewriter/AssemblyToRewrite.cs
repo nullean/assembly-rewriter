@@ -7,6 +7,7 @@ namespace AssemblyRewriter
         private string _inputName;
         private string _outputName;
         private string _inputDirectory;
+        private string _outputDirectory;
 
         public AssemblyToRewrite(string inputPath, string outputPath)
         {
@@ -19,6 +20,8 @@ namespace AssemblyRewriter
         public string InputDirectory => _inputDirectory ?? (_inputDirectory = Path.GetDirectoryName(InputPath));
 
         public string InputName => _inputName ?? (_inputName = Path.GetFileNameWithoutExtension(InputPath));
+
+        public string OutputDirectory => _outputDirectory ?? (_outputDirectory = Path.GetDirectoryName(OutputPath));
 
         public string OutputName => _outputName ?? (_outputName = Path.GetFileNameWithoutExtension(OutputPath));
 
