@@ -2,11 +2,11 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <AssemblyName>assembly-rewriter</AssemblyName>
+    <AssemblyName>dotnet-assembly-rewriter</AssemblyName>
     <RootNamespace>AssemblyRewriter</RootNamespace>
 
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>assembly-rewriter</ToolCommandName>
+    <ToolCommandName>dotnet-assembly-rewriter</ToolCommandName>
     <PackageOutputPath>./build</PackageOutputPath>
 
     <MajorMinor>1.0</MajorMinor>
