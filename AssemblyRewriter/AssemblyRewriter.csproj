@@ -7,10 +7,6 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>assembly-rewriter</ToolCommandName>
 
-<!--    <PackAsTool>true</PackAsTool>-->
-<!--    <ToolCommandName>dotnet-assembly-rewriter</ToolCommandName>-->
-<!--    <PackageOutputPath>./build</PackageOutputPath>-->
-
     <MajorMinor>1.0</MajorMinor>
     <MinVerPrerelease>alpha$([System.DateTime]::UtcNow.ToString(yyyyMMddTHHmmss))</MinVerPrerelease>
     <Version>$(MajorMinor).0-$(MinVerPrerelease)</Version>
