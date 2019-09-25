@@ -7,7 +7,7 @@ environment:
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 
 install:
-    - cmd: choco install dotnetcore-sdk --version 3.0.100
+  - cmd: choco install dotnetcore-sdk --version 3.0.100
 build_script: 
   - cmd: dotnet pack -c RELEASE
     
