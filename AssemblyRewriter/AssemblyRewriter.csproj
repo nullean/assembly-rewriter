@@ -9,7 +9,7 @@
     <ToolCommandName>assembly-rewriter</ToolCommandName>
 
     <MajorMinor>1.0</MajorMinor>
-    <MinVerPrerelease>alpha$([System.DateTime]::UtcNow.ToString(yyyyMMddtHHmmss))</MinVerPrerelease>
+    <MinVerPrerelease>ci$([System.DateTime]::UtcNow.ToString(yyyyMMddHHmmss))</MinVerPrerelease>
     <Version>$(MajorMinor).0-$(MinVerPrerelease)</Version>
     <PackageVersion>$(Version)</PackageVersion>
   </PropertyGroup>
