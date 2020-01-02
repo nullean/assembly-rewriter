@@ -8,6 +8,7 @@ namespace AssemblyRewriter
     {
         private static readonly List<string> InputPaths = new List<string>();
         private static readonly List<string> OutputPaths = new List<string>();
+        private static readonly List<string> ResolveDirectories = new List<string>();
         private static bool _help;
         private static bool _verbose;
 
@@ -17,6 +18,7 @@ namespace AssemblyRewriter
             {
                 {"i|in=", "input {path} for assembly to rewrite. Use multiple flags for multiple input paths", i => InputPaths.Add(i)},
                 {"o|out=", "output {path} for rewritten assembly. Use multiple flags for multiple output paths", o => OutputPaths.Add(o)},
+                {"r|resolvedir=", "Additional assembly resolve directories. Use multiple flags for multiple resolve directories", o => ResolveDirectories.Add(o)},
                 {"v|verbose", "verbose output", v => _verbose = v != null},
                 {"h|?|help", "show this message and exit", h => _help = h != null},
             };
@@ -73,7 +75,7 @@ namespace AssemblyRewriter
             try
             {
                 var rewriter = new AssemblyRewriter(_verbose);
-                rewriter.RewriteNamespaces(InputPaths, OutputPaths);
+                rewriter.RewriteNamespaces(InputPaths, OutputPaths, ResolveDirectories);
             }
             catch (Exception e)
             {

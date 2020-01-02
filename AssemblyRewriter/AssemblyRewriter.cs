@@ -17,14 +17,23 @@ namespace AssemblyRewriter
 
         public AssemblyRewriter(bool verbose) => _verbose = verbose;
 
-        public void RewriteNamespaces(IEnumerable<string> inputPaths, IEnumerable<string> outputPaths)
+        public void RewriteNamespaces(
+            IEnumerable<string> inputPaths,
+            IEnumerable<string> outputPaths,
+            IEnumerable<string> additionalResolveDirectories
+            )
         {
             var assemblies = inputPaths.Zip(outputPaths,
                 (inputPath, outputPath) => new AssemblyToRewrite(inputPath, outputPath)).ToList();
 
             this._renames = assemblies.ToDictionary(k => k.InputName, v => v.OutputName);
 
-            var resolver = new AssemblyResolver(assemblies.Select(a => a.InputDirectory).Concat(assemblies.Select(a=>a.OutputDirectory)));
+            var resolveDirs = assemblies.Select(a => a.InputDirectory)
+                .Concat(assemblies.Select(a => a.OutputDirectory))
+                .Concat(additionalResolveDirectories)
+                .Distinct();
+
+            var resolver = new AssemblyResolver(resolveDirs);
             var readerParameters = new ReaderParameters { AssemblyResolver = resolver, ReadWrite = true };
 
             foreach (var assembly in assemblies)
