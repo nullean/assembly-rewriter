@@ -1,4 +1,4 @@
-# AssemblyRewriter
+# assembly-rewriter
 
 Rewrites .NET assemblies with [Mono.Cecil](https://www.mono-project.com/docs/tools+libraries/libraries/Mono.Cecil/), to allow two different versions of the same assembly to be referenced within an application.
  
@@ -9,14 +9,33 @@ It assumes that the assembly DLL name is the top level namespace and rewrites
 3. IL `ldstr` op codes if they start with the namespace
 4. compiler generated backing fields
 
-This small program was written to allow different versions [Elasticsearch .NET clients](https://github.com/elastic/elasticsearch-net) to be rewritten for benchmark comparisons. Your mileage may vary rewriting other assemblies :)
+This small program was written to allow different versions [Elasticsearch .NET clients](https://github.com/elastic/elasticsearch-net) to be rewritten for benchmark comparisons. 
+Your mileage may vary rewriting other assemblies :)
+
+## Installation
+
+
+Distributed as a .NET tool so install using the following
+
+```
+dotnet tool install assembly-rewriter
+```
+
+## Run 
+
+```bat
+dotnet assembly-rewriter
+```
+
+You can omit `dotnet` if you install this as a global tool
+
 
 ## Examples
 
 Rewrite [NEST, the Elasticsearch .NET high level client](https://github.com/elastic/elasticsearch-net), version 6.2.0
 
 ```c#
-dotnet run -- -i C:/Nest.dll -o C:/Nest620.dll
+assembly-rewriter -i C:/Nest.dll -o C:/Nest620.dll
 ```
 
 Now, `Nest620.dll` and another version of `Nest.dll` can be referenced in the same project. 
@@ -25,7 +44,7 @@ There's _a small issue here_ however; both versions of NEST rely on `Elasticsear
 this dependency at the same time, and update the references to Elasticsearch.Net within NEST to reference the new rewritten assembly
 
 ```c#
-dotnet run -- -i C:/Nest.dll -o C:/Nest620.dll -i C:/Elasticsearch.Net.dll -o C:/Elasticsearch.Net620.dll
+assembly-rewriter -i C:/Nest.dll -o C:/Nest620.dll -i C:/Elasticsearch.Net.dll -o C:/Elasticsearch.Net620.dll
 ```
 
 Great! Now we can reference both in the same project.
@@ -33,7 +52,7 @@ Great! Now we can reference both in the same project.
 If there are other direct dependencies that may version clash, these can be passed as well
 
 ```c#
-dotnet run -- -i C:/Nest.dll -o C:/Nest620.dll -i C:/Elasticsearch.Net.dll -o C:/Elasticsearch.Net620.dll -i C:/Newtonsoft.Json.dll -o C:/Newtonsoft.Json620.dll
+assembly-rewriter -i C:/Nest.dll -o C:/Nest620.dll -i C:/Elasticsearch.Net.dll -o C:/Elasticsearch.Net620.dll -i C:/Newtonsoft.Json.dll -o C:/Newtonsoft.Json620.dll
 ```
 
 ## Rewrite validation

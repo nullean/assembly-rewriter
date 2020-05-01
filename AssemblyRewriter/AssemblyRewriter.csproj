@@ -1,15 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp2.2;netcoreapp3.0</TargetFrameworks>
-    <AssemblyName>dotnet-assembly-rewriter</AssemblyName>
+    <TargetFrameworks>netcoreapp3.0;netcoreapp3.1</TargetFrameworks>
+    <AssemblyName>assembly-rewriter</AssemblyName>
     <RootNamespace>AssemblyRewriter</RootNamespace>
-    
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>assembly-rewriter</ToolCommandName>
 
     <MajorMinor>1.0</MajorMinor>
-    <MinVerPrerelease Condition="'$(APPVEYOR_BUILD_VERSION)' != ''">-ci$([System.DateTime]::UtcNow.ToString(yyyyMMddHHmmss))</MinVerPrerelease>
+    <MinVerPrerelease>-ci$([System.DateTime]::UtcNow.ToString(yyyyMMddHHmmss))</MinVerPrerelease>
     <Version>$(MajorMinor).0$(MinVerPrerelease)</Version>
     <PackageVersion>$(Version)</PackageVersion>
   </PropertyGroup>
