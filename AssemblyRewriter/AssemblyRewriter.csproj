@@ -15,7 +15,6 @@
     <Title>assembly-rewriter: a dotnet tool to rewrite assembly namespaces</Title>
     <Description>Diff assemblies and nuget packages</Description>
 
-
     <MajorMinor>1.0</MajorMinor>
     <MinVerPrerelease>-ci$([System.DateTime]::UtcNow.ToString(yyyyMMddHHmmss))</MinVerPrerelease>
     <Version>$(MajorMinor).0$(MinVerPrerelease)</Version>
