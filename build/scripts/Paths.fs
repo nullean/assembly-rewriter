@@ -3,7 +3,7 @@ module Paths
 open System
 open System.IO
 
-let ToolName = "assembly-differ"
+let ToolName = "assembly-rewriter"
 let Repository = sprintf "nullean/%s" ToolName
 
 let Root =
