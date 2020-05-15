@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "assembly-rewriter", "src\assembly-rewriter\assembly-rewriter.csproj", "{879F7668-3136-4A46-8B62-17085A764CBA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{61F7EFA3-2D67-47B5-9327-3AE03AC1AC0D}"
+ProjectSection(SolutionItems) = preProject
+	build.sh = build.sh
+	build.bat = build.bat
+	nuget-icon.png = nuget-icon.png
+	README.md = README.md
+	LICENSE = LICENSE
+	global.json = global.json
+	Directory.Build.props = Directory.Build.props
+	.github\workflows\ci.yml = .github\workflows\ci.yml
+EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{32D9729D-0ACB-4F0F-A3D8-2194FAE4A8C8}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "scripts", "build\scripts\scripts.fsproj", "{827FD131-B575-4C75-94BB-31141C359273}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{879F7668-3136-4A46-8B62-17085A764CBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{879F7668-3136-4A46-8B62-17085A764CBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{879F7668-3136-4A46-8B62-17085A764CBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{879F7668-3136-4A46-8B62-17085A764CBA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{827FD131-B575-4C75-94BB-31141C359273}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{827FD131-B575-4C75-94BB-31141C359273}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{827FD131-B575-4C75-94BB-31141C359273}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{827FD131-B575-4C75-94BB-31141C359273}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{879F7668-3136-4A46-8B62-17085A764CBA} = {32D9729D-0ACB-4F0F-A3D8-2194FAE4A8C8}
+		{827FD131-B575-4C75-94BB-31141C359273} = {61F7EFA3-2D67-47B5-9327-3AE03AC1AC0D}
+	EndGlobalSection
+EndGlobal

@@ -7,8 +7,12 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>assembly-rewriter</ToolCommandName>
 
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\..\build\keys\keypair.snk</AssemblyOriginatorKeyFile>
+
     <PackageIcon>nuget-icon.png</PackageIcon>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/nullean/assembly-rewriter</RepositoryUrl>
     <PackageProjectUrl>https://github.com/nullean/assembly-rewriter</PackageProjectUrl>
     <PackageReleaseNotes>https://github.com/nullean/assembly-rewriter/releases</PackageReleaseNotes>
 
@@ -16,28 +20,20 @@
     <Description>Diff assemblies and nuget packages</Description>
 
     <MajorMinor>1.0</MajorMinor>
-    <MinVerPrerelease>-ci$([System.DateTime]::UtcNow.ToString(yyyyMMddHHmmss))</MinVerPrerelease>
     <Version>$(MajorMinor).0$(MinVerPrerelease)</Version>
     <PackageVersion>$(Version)</PackageVersion>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
-    <PackageReference Include="Mono.Options" Version="5.3.0.1" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="..\nuget-icon.png" CopyToOutputDirectory="PreserveNewest">
+    <Content Include="..\..\nuget-icon.png" CopyToOutputDirectory="PreserveNewest">
       <Link>nuget-icon.png</Link>
       <Pack>True</Pack>
       <PackagePath>nuget-icon.png</PackagePath>
     </Content>
-    <Content Include="..\appveyor.yml">
-      <Link>appveyor.yml</Link>
-    </Content>
-    <Content Include="..\License.txt">
-      <Link>License.txt</Link>
-    </Content>
-    <Content Include="..\README.md">
-      <Link>README.md</Link>
-    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
+    <PackageReference Include="Mono.Options" Version="5.3.0.1" />
   </ItemGroup>
 </Project>
