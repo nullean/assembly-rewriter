@@ -46,16 +46,15 @@ let private validatePackages (arguments:ParseResults<Arguments>) =
 let private generateApiChanges (arguments:ParseResults<Arguments>) =
     let output = Paths.RootRelative <| Paths.Output.FullName
     let currentVersion = currentVersion.Value
-    let project = Paths.RootRelative Paths.ToolProject.FullName
-    let dotnetRun =[ "run"; "-c"; "Release"; "-f"; "netcoreapp3.1"; "-p"; project]
     let args =
         [
+            "assembly-differ"
             (sprintf "previous-nuget|%s|%s|netcoreapp3.1" Paths.ToolName currentVersion);
             (sprintf "directory|src/%s/bin/Release/netcoreapp3.1" Paths.ToolName);
             "--target"; Paths.ToolName; "-f"; "github-comment"; "--output"; output
         ]
         
-    exec "dotnet" (dotnetRun @ ["--"] @ args) |> ignore
+    exec "dotnet" args |> ignore
     
 let private generateReleaseNotes (arguments:ParseResults<Arguments>) =
     let currentVersion = currentVersion.Value
