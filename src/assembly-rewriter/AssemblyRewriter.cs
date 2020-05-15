@@ -26,7 +26,7 @@ namespace AssemblyRewriter
             var assemblies = inputPaths.Zip(outputPaths,
                 (inputPath, outputPath) => new AssemblyToRewrite(inputPath, outputPath)).ToList();
 
-            this._renames = assemblies.ToDictionary(k => k.InputName, v => v.OutputName);
+            _renames = assemblies.ToDictionary(k => k.InputName, v => v.OutputName);
 
             var resolveDirs = assemblies.Select(a => a.InputDirectory)
                 .Concat(assemblies.Select(a => a.OutputDirectory))
@@ -56,10 +56,10 @@ namespace AssemblyRewriter
         }
 
         private bool IsRewritableType(string typeName) =>
-            this._renames.Keys.Any(r => r.StartsWith($"{typeName}.") || r.StartsWith($"<{typeName}."));
+            _renames.Keys.Any(r => r.StartsWith($"{typeName}.") || r.StartsWith($"<{typeName}."));
 
         private bool IsRewritableType(Func<string, string, bool> act) =>
-            this._renames.Any(kv => act(kv.Key, kv.Value));
+            _renames.Any(kv => act(kv.Key, kv.Value));
 
         private void RewriteAttributes(string assembly, IEnumerable<CustomAttribute> attributes)
         {
@@ -77,7 +77,7 @@ namespace AssemblyRewriter
                         var valueTypeDefinition = constructorArgument.Value as TypeDefinition;
                         RewriteTypeReference(assembly, constructorArgument.Type);
                         if (valueTypeReference != null) RewriteTypeReference(assembly, valueTypeReference);
-                        if (genericInstanceType != null) this.RewriteTypeReference(assembly, genericInstanceType);
+                        if (genericInstanceType != null) RewriteTypeReference(assembly, genericInstanceType);
                         if (valueTypeDefinition == null)
                             RewriteTypeReference(assembly, valueTypeDefinition);
 
@@ -105,10 +105,10 @@ namespace AssemblyRewriter
 
         private void RewriteMemberReference(string assembly, MemberReference memberReference)
         {
-            if (!this.IsRewritableType(memberReference.Name)) return;
+            if (!IsRewritableType(memberReference.Name)) return;
 
-            var name = this.RenameTypeName(memberReference.Name, (t, o, n) => t.Replace($"{o}.", $"{n}."));
-            this.Write(assembly, memberReference.GetType().Name, $"{memberReference.Name} to {name}");
+            var name = RenameTypeName(memberReference.Name, (t, o, n) => t.Replace($"{o}.", $"{n}."));
+            Write(assembly, memberReference.GetType().Name, $"{memberReference.Name} to {name}");
             memberReference.Name = name;
         }
 
@@ -116,10 +116,10 @@ namespace AssemblyRewriter
         {
             foreach (var genericParameterConstraint in genericParameter.Constraints)
             {
-                if (!this.IsRewritableType(genericParameterConstraint.Name)) continue;
+                if (!IsRewritableType(genericParameterConstraint.Name)) continue;
 
-                var name = this.RenameTypeName(genericParameterConstraint.Name);
-                this.Write(assembly, nameof(GenericParameter), $"{genericParameter.Name} to {name}");
+                var name = RenameTypeName(genericParameterConstraint.Name);
+                Write(assembly, nameof(GenericParameter), $"{genericParameter.Name} to {name}");
                 genericParameterConstraint.Name = name;
             }
 
@@ -224,7 +224,7 @@ namespace AssemblyRewriter
             {
                 var name = RenameTypeName(typeReference.Namespace);
                 var newFullName = RenameTypeName(typeReference.FullName, (t, o, n) => t.Replace(o + ".", n + "."));
-                this.Write(assembly, nameof(TypeReference), $"{typeReference.FullName} to {newFullName}");
+                Write(assembly, nameof(TypeReference), $"{typeReference.FullName} to {newFullName}");
                 typeReference.Namespace = name;
             }
 
@@ -232,7 +232,7 @@ namespace AssemblyRewriter
             {
                 var name = RenameTypeName(typeReference.Name, (t, o, n)=>t.Replace($"<{o}-", $"<{n}-"));
                 var newFullName = RenameTypeName(typeReference.FullName, (t, o, n) => t.Replace($"<{o}-",$"<{n}-"));
-                this.Write(assembly, nameof(TypeReference), $"{typeReference.FullName} to {newFullName}");
+                Write(assembly, nameof(TypeReference), $"{typeReference.FullName} to {newFullName}");
                 typeReference.Name = name;
             }
 
@@ -253,7 +253,7 @@ namespace AssemblyRewriter
                 if (newAssemblyName == currentAssemblyName)
                     newAssemblyName += $" ({newName})";
 
-                this.Write(assembly.Name.Name, nameof(AssemblyTitleAttribute), $"{currentAssemblyName} to {newAssemblyName}");
+                Write(assembly.Name.Name, nameof(AssemblyTitleAttribute), $"{currentAssemblyName} to {newAssemblyName}");
                 attribute.ConstructorArguments[0] =
                     new CustomAttributeArgument(assembly.MainModule.TypeSystem.String, newAssemblyName);
             }
@@ -382,7 +382,7 @@ namespace AssemblyRewriter
                     if (IsRewritableType((o, n) => operandString.StartsWith($"{o}.")))
                     {
                         var name = RenameTypeName(operandString, (t, o, n) => t.Replace($"{o}.", $"{n}."));
-                        this.Write(assembly, nameof(Instruction), $"{instruction.OpCode.Code}. {name}");
+                        Write(assembly, nameof(Instruction), $"{instruction.OpCode.Code}. {name}");
                         instruction.Operand = operandString;
                     }
                 }
@@ -390,20 +390,20 @@ namespace AssemblyRewriter
                 else if (instruction.OpCode.Code == Code.Ldfld || instruction.OpCode.Code == Code.Stfld)
                 {
                     var fieldReference = (FieldReference) instruction.Operand;
-                    this.RewriteMemberReference(assembly, fieldReference);
+                    RewriteMemberReference(assembly, fieldReference);
 
                     // Some generated fields start with {namespace}
-                    this.RewriteTypeReference(assembly, fieldReference.DeclaringType);
+                    RewriteTypeReference(assembly, fieldReference.DeclaringType);
                 }
                 else if (instruction.OpCode.Code == Code.Call)
                 {
                     var methodReference = (MethodReference) instruction.Operand;
-                    this.RewriteMemberReference(assembly, methodReference);
+                    RewriteMemberReference(assembly, methodReference);
 
                     if (methodReference.IsGenericInstance)
                     {
                         var genericInstance = (GenericInstanceMethod) methodReference;
-                        this.RewriteTypeReferences(assembly, genericInstance.GenericArguments);
+                        RewriteTypeReferences(assembly, genericInstance.GenericArguments);
                     }
                 }
             }
