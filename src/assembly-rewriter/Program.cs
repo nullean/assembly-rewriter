@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using ILRepacking;
 using Mono.Options;
 
 namespace AssemblyRewriter
@@ -9,6 +12,9 @@ namespace AssemblyRewriter
 		private static readonly List<string> InputPaths = new List<string>();
 		private static readonly List<string> OutputPaths = new List<string>();
 		private static readonly List<string> ResolveDirectories = new List<string>();
+		private static bool _merge;
+		private static string _keyFile;
+
 		private static bool _help;
 		private static bool _verbose;
 
@@ -29,6 +35,8 @@ namespace AssemblyRewriter
 					"Additional assembly resolve directories. Use multiple flags for multiple resolve directories",
 					o => ResolveDirectories.Add(o)
 				},
+				{"m|merge", "merge all output dlls to a single dll using the first output path as target", p => _merge = p != null},
+				{"k|keyFile=", "resign merged dll with this keyFile", p => _keyFile = p},
 				{"v|verbose", "verbose output", v => _verbose = v != null},
 				{"h|?|help", "show this message and exit", h => _help = h != null}
 			};
@@ -93,7 +101,31 @@ namespace AssemblyRewriter
 				Console.WriteLine(e);
 				return 1;
 			}
+			if (!_merge) return 0;
+			try
+			{
+				var repackOptions = new RepackOptions
+				{
+					Internalize = true,
+					Closed = true,
+					KeepOtherVersionReferences = false,
+					TargetKind = ILRepack.Kind.SameAsPrimaryAssembly,
+					InputAssemblies = OutputPaths.ToArray(),
+					LineIndexation = true,
+					OutputFile = OutputPaths.First(),
+					KeyFile = _keyFile,
+					SearchDirectories = OutputPaths.Select(p=> new DirectoryInfo(p).FullName).Distinct()
+				};
 
+				var pack = new ILRepack(repackOptions, new RepackConsoleLogger());
+				pack.Repack();
+			}
+			catch (Exception e)
+			{
+				Console.ForegroundColor = ConsoleColor.Red;
+				Console.WriteLine(e);
+				return 2;
+			}
 			return 0;
 		}
 
