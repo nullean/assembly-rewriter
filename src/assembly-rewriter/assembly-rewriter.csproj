@@ -18,6 +18,7 @@
 
     <Title>assembly-rewriter: a dotnet tool to rewrite assembly namespaces</Title>
     <Description>Diff assemblies and nuget packages</Description>
+    <LangVersion>latest</LangVersion>
 
   </PropertyGroup>
 
@@ -30,8 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.9.0-preview1" />
     <PackageReference Include="ILRepack.Lib" Version="2.0.18" />
-    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
-    <PackageReference Include="Mono.Options" Version="5.3.0.1" />
+    <PackageReference Include="Mono.Cecil" Version="0.11.3" />
   </ItemGroup>
 </Project>

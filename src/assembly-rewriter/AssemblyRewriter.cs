@@ -12,11 +12,17 @@ namespace AssemblyRewriter
 	public class AssemblyRewriter
 	{
 		private readonly bool _verbose;
+		private readonly string _keyFile;
 		private Dictionary<string, string> _renames = new Dictionary<string, string>();
 
-		public AssemblyRewriter(bool verbose) => _verbose = verbose;
+		public AssemblyRewriter(Options options)
+		{
+			_verbose = options.Verbose;
+			// if a keyfile has been passed but no merge argument, use it to sign the rewritten assembly
+			_keyFile = !string.IsNullOrEmpty(options.KeyFile) && !options.Merge ? options.KeyFile : null;
+		}
 
-		public void RewriteNamespaces(
+		public void Rewrite(
 			IEnumerable<string> inputPaths,
 			IEnumerable<string> outputPaths,
 			IEnumerable<string> additionalResolveDirectories
@@ -40,12 +46,16 @@ namespace AssemblyRewriter
 
 		private string RenameTypeName(string typeName, Func<string, string, string, string> replace = null)
 		{
-			replace ??= ((t, o, n) => t.Replace(o, n));
-			foreach (var (key, value) in _renames)
+			replace ??= (t, o, n) => t.Replace(o + ".", n + ".");
+			foreach (var kv in _renames)
 			{
-				//safeguard e.g Nest7 to be renamed to Nest77
-				if (typeName.StartsWith(value)) continue;
-				var n = replace(typeName, key, value);
+				//safeguard against multiple renames
+				if (typeName.StartsWith($"{kv.Value}.") ||
+				    typeName.Contains($"<{kv.Value}.") ||
+				    typeName.Contains($",{kv.Value}."))
+					continue;
+
+				var n = replace(typeName, kv.Key, kv.Value);
 				if (typeName != n) return n;
 			}
 
@@ -53,7 +63,7 @@ namespace AssemblyRewriter
 		}
 
 		private bool IsRewritableType(string typeName) =>
-			_renames.Keys.Any(r => r.StartsWith($"{typeName}.") || r.StartsWith($"<{typeName}."));
+			_renames.Keys.Any(r => typeName.Contains($"{r}."));
 
 		private bool IsRewritableType(Func<string, string, bool> act) =>
 			_renames.Any(kv => act(kv.Key, kv.Value));
@@ -100,20 +110,28 @@ namespace AssemblyRewriter
 		{
 			if (!IsRewritableType(memberReference.Name)) return;
 
-			var name = RenameTypeName(memberReference.Name, (t, o, n) => t.Replace($"{o}.", $"{n}."));
+			if (memberReference.DeclaringType != null)
+				RewriteTypeReference(assembly, memberReference.DeclaringType);
+
+			var name = RenameTypeName(memberReference.Name);
 			Write(assembly, memberReference.GetType().Name, $"{memberReference.Name} to {name}");
 			memberReference.Name = name;
 		}
 
 		private void RewriteGenericParameter(string assembly, GenericParameter genericParameter)
 		{
+			var name = RenameTypeName(genericParameter.Name);
+			Write(assembly, nameof(GenericParameter), $"{genericParameter.Name} to {name}");
+			genericParameter.Name = name;
+
 			foreach (var genericParameterConstraint in genericParameter.Constraints)
 			{
-				if (!IsRewritableType(genericParameterConstraint.Name)) continue;
+				var constraintTypeName = genericParameterConstraint.ConstraintType.Name;
+				if (!IsRewritableType(constraintTypeName)) continue;
 
-				var name = RenameTypeName(genericParameterConstraint.Name);
-				Write(assembly, nameof(GenericParameter), $"{genericParameter.Name} to {name}");
-				genericParameterConstraint.Name = name;
+				name = RenameTypeName(constraintTypeName);
+				Write(assembly, nameof(GenericParameterConstraint), $"{constraintTypeName} to {name}");
+				genericParameterConstraint.ConstraintType.Name = name;
 			}
 
 			foreach (var nestedGenericParameter in genericParameter.GenericParameters)
@@ -173,17 +191,29 @@ namespace AssemblyRewriter
 
 				RewriteAssemblyTitleAttribute(assembly, currentName, newName);
 				assembly.Name.Name = newName;
+				var writerParameters = new WriterParameters();
+
+				if (!string.IsNullOrEmpty(_keyFile) && File.Exists(_keyFile))
+				{
+					Write(currentName, nameof(AssemblyDefinition),
+						$"signing {newName} with keyfile {_keyFile}");
+					var fileBytes = File.ReadAllBytes(_keyFile);
+					writerParameters.StrongNameKeyBlob = fileBytes;
+					assembly.Name.Attributes |= AssemblyAttributes.PublicKey;
+					assembly.MainModule.Attributes |= ModuleAttributes.StrongNameSigned;
+				}
+
 				if (assemblyToRewrite.OutputPath == assemblyToRewrite.InputPath)
 				{
 					tempOutputPath = assemblyToRewrite.OutputPath + ".temp";
-					assembly.Write(tempOutputPath);
+					assembly.Write(tempOutputPath, writerParameters);
 					assemblyToRewrite.Rewritten = true;
 					Write(currentName, nameof(AssemblyDefinition),
 						$"finished rewriting {currentName} into {tempOutputPath}");
 				}
 				else
 				{
-					assembly.Write(assemblyToRewrite.OutputPath);
+					assembly.Write(assemblyToRewrite.OutputPath, writerParameters);
 					assemblyToRewrite.Rewritten = true;
 					Write(currentName, nameof(AssemblyDefinition),
 						$"finished rewriting {currentName} into {assemblyToRewrite.OutputPath}");
@@ -220,9 +250,11 @@ namespace AssemblyRewriter
 
 			if (typeReference == null) return;
 
-			if (typeReference.Namespace != string.Empty)
+			if (typeReference.Namespace != string.Empty && IsRewritableType((o, n) =>
+				(typeReference.Namespace == o || typeReference.Namespace.StartsWith($"{o}.")) &&
+				!typeReference.Namespace.StartsWith(n)))
 			{
-				var name = RenameTypeName(typeReference.Namespace);
+				var name = RenameTypeName(typeReference.Namespace, (t, o, n) => t.Replace(o, n));
 				var newFullName = RenameTypeName(typeReference.FullName, (t, o, n) => t.Replace(o + ".", n + "."));
 				Write(assembly, nameof(TypeReference), $"{typeReference.FullName} to {newFullName}");
 				typeReference.Namespace = name;
@@ -235,6 +267,10 @@ namespace AssemblyRewriter
 				Write(assembly, nameof(TypeReference), $"{typeReference.FullName} to {newFullName}");
 				typeReference.Name = name;
 			}
+
+			if (typeReference.HasGenericParameters)
+				foreach (var genericParameter in typeReference.GenericParameters)
+					RewriteGenericParameter(assembly, genericParameter);
 
 			if (typeReference.DeclaringType != null)
 				RewriteTypeReference(assembly, typeReference.DeclaringType);
@@ -267,10 +303,9 @@ namespace AssemblyRewriter
 				if (typeDefinition.HasNestedTypes)
 					RewriteTypes(assembly, typeDefinition.NestedTypes);
 
-				var needsRewrite = IsRewritableType((o, n) =>
-					typeDefinition.Namespace.StartsWith(o) && !typeDefinition.Namespace.StartsWith(n)
-				);
-				if (needsRewrite)
+				if (IsRewritableType((o, n) =>
+					(typeDefinition.Namespace == o || typeDefinition.Namespace.StartsWith($"{o}.")) &&
+					!typeDefinition.Namespace.StartsWith(n)))
 				{
 					var name = RenameTypeName(typeDefinition.Namespace, (t, o, n) => t.Replace(o, n));
 					Write(assembly, nameof(TypeDefinition),
@@ -286,16 +321,21 @@ namespace AssemblyRewriter
 				foreach (var propertyDefinition in typeDefinition.Properties)
 				{
 					RewriteAttributes(assembly, propertyDefinition.CustomAttributes);
+					RewriteTypeReference(assembly, propertyDefinition.PropertyType);
 					RewriteMemberReference(assembly, propertyDefinition);
 
 					if (propertyDefinition.GetMethod != null)
 						RewriteMethodDefinition(assembly, propertyDefinition.GetMethod);
 					if (propertyDefinition.SetMethod != null)
 						RewriteMethodDefinition(assembly, propertyDefinition.SetMethod);
+					if (propertyDefinition.HasOtherMethods)
+						foreach (var otherMethod in propertyDefinition.OtherMethods)
+							RewriteMethodDefinition(assembly, otherMethod);
 
-					if (IsRewritableType((o, n) => propertyDefinition.Name.Contains($"<{o}.")))
+					// generic properties or explicitly implemented interface properties
+					if (IsRewritableType(propertyDefinition.Name))
 					{
-						var name = RenameTypeName(propertyDefinition.Name, (t, o, n) => t.Replace($"<{o}.", $"<{n}."));
+						var name = RenameTypeName(propertyDefinition.Name);
 						Write(assembly, nameof(PropertyDefinition), $"{propertyDefinition.Name} to {name}");
 						propertyDefinition.Name = name;
 					}
@@ -303,25 +343,37 @@ namespace AssemblyRewriter
 
 				foreach (var fieldDefinition in typeDefinition.Fields)
 				{
+					// compiler generated backing field
+					if (IsRewritableType((fieldDefinition.Name)))
+					{
+						var name = RenameTypeName(fieldDefinition.Name);
+						Write(assembly, nameof(PropertyDefinition), $"{fieldDefinition.Name} to {name}");
+						fieldDefinition.Name = name;
+					}
+
 					RewriteAttributes(assembly, fieldDefinition.CustomAttributes);
+					RewriteTypeReference(assembly, fieldDefinition.FieldType);
 					RewriteMemberReference(assembly, fieldDefinition);
 				}
 
 				foreach (var interfaceImplementation in typeDefinition.Interfaces)
 				{
 					RewriteAttributes(assembly, interfaceImplementation.CustomAttributes);
+					RewriteTypeReference(assembly, interfaceImplementation.InterfaceType);
 					RewriteMemberReference(assembly, interfaceImplementation.InterfaceType);
 				}
 
 				foreach (var eventDefinition in typeDefinition.Events)
 				{
 					RewriteAttributes(assembly, eventDefinition.CustomAttributes);
+					RewriteTypeReference(assembly, eventDefinition.EventType);
 					RewriteMemberReference(assembly, eventDefinition.EventType);
 				}
 
 				foreach (var genericParameter in typeDefinition.GenericParameters)
 				{
 					RewriteAttributes(assembly, genericParameter.CustomAttributes);
+					RewriteTypeReference(assembly, genericParameter);
 					RewriteGenericParameter(assembly, genericParameter);
 				}
 			}
@@ -332,12 +384,19 @@ namespace AssemblyRewriter
 			RewriteAttributes(assembly, methodDefinition.CustomAttributes);
 			RewriteMemberReference(assembly, methodDefinition);
 
+			if (IsRewritableType((o, n) => methodDefinition.Name.StartsWith(o + ".")))
+			{
+				var name = RenameTypeName(methodDefinition.Name);
+				Write(assembly, nameof(MethodDefinition), $"{methodDefinition.Name} to {name}");
+				methodDefinition.Name = name;
+			}
+
 			foreach (var methodDefinitionOverride in methodDefinition.Overrides)
 			{
 				// explicit interface implementation of generic interface
-				if (IsRewritableType((o, n) => methodDefinition.Name.Contains("<" + o)))
+				if (IsRewritableType(methodDefinition.Name))
 				{
-					var name = RenameTypeName(methodDefinition.Name, (t, o, n) => t.Replace($"<{o}", $"<{n}"));
+					var name = RenameTypeName(methodDefinition.Name);
 					Write(assembly, nameof(MethodDefinition), $"{methodDefinition.Name} to {name}");
 					methodDefinition.Name = name;
 				}
@@ -381,24 +440,33 @@ namespace AssemblyRewriter
 					var operandString = (string) instruction.Operand;
 					if (IsRewritableType((o, n) => operandString.StartsWith($"{o}.")))
 					{
-						var name = RenameTypeName(operandString, (t, o, n) => t.Replace($"{o}.", $"{n}."));
+						var name = RenameTypeName(operandString);
 						Write(assembly, nameof(Instruction), $"{instruction.OpCode.Code}. {name}");
 						instruction.Operand = operandString;
 					}
 				}
-				// Compiler generated backing fields
+				// loading or storing compiler generated backing fields
 				else if (instruction.OpCode.Code == Code.Ldfld || instruction.OpCode.Code == Code.Stfld)
 				{
 					var fieldReference = (FieldReference) instruction.Operand;
-					RewriteMemberReference(assembly, fieldReference);
 
-					// Some generated fields start with {namespace}
-					RewriteTypeReference(assembly, fieldReference.DeclaringType);
+					// rename the compiler backing field name
+					if (IsRewritableType((o, n) => fieldReference.Name.StartsWith($"<{o}.")))
+					{
+						var name = RenameTypeName(fieldReference.Name, (t, o, n) => t.Replace($"<{o}.", $"<{n}."));
+						Write(assembly, nameof(Instruction), $"{instruction.OpCode.Code}. {name}");
+						fieldReference.Name = name;
+					}
+
+					RewriteMemberReference(assembly, fieldReference);
+					RewriteTypeReference(assembly, fieldReference.FieldType);
 				}
+				// method calls
 				else if (instruction.OpCode.Code == Code.Call)
 				{
 					var methodReference = (MethodReference) instruction.Operand;
 					RewriteMemberReference(assembly, methodReference);
+					RewriteTypeReference(assembly, methodReference.ReturnType);
 
 					if (methodReference.IsGenericInstance)
 					{
@@ -433,7 +501,7 @@ namespace AssemblyRewriter
 				case nameof(AssemblyDefinition):
 				case nameof(AssemblyNameReference):
 				case nameof(AssemblyTitleAttribute):
-				case nameof(RewriteNamespaces):
+				case nameof(Rewrite):
 					Write();
 					break;
 				default:

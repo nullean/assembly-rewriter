@@ -1,88 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CommandLine;
+using CommandLine.Text;
 using ILRepacking;
-using Mono.Options;
 
 namespace AssemblyRewriter
 {
 	internal static class Program
 	{
-		private static readonly List<string> InputPaths = new List<string>();
-		private static readonly List<string> OutputPaths = new List<string>();
-		private static readonly List<string> ResolveDirectories = new List<string>();
-		private static bool _merge;
-		private static string _keyFile;
-
-		private static bool _help;
-		private static bool _verbose;
-
 		private static int Main(string[] args)
 		{
-			var options = new OptionSet
+			using var parser = new Parser(settings =>
 			{
-				{
-					"i|in=", "input {path} for assembly to rewrite. Use multiple flags for multiple input paths",
-					i => InputPaths.Add(i)
-				},
-				{
-					"o|out=", "output {path} for rewritten assembly. Use multiple flags for multiple output paths",
-					o => OutputPaths.Add(o)
-				},
-				{
-					"r|resolvedir=",
-					"Additional assembly resolve directories. Use multiple flags for multiple resolve directories",
-					o => ResolveDirectories.Add(o)
-				},
-				{"m|merge", "merge all output dlls to a single dll using the first output path as target", p => _merge = p != null},
-				{"k|keyFile=", "resign merged dll with this keyFile", p => _keyFile = p},
-				{"v|verbose", "verbose output", v => _verbose = v != null},
-				{"h|?|help", "show this message and exit", h => _help = h != null}
+				settings.HelpWriter = null;
+				settings.IgnoreUnknownArguments = false;
+				settings.AllowMultiInstance = true;
+			});
+
+			var result = parser.ParseArguments<Options>(args);
+
+			return result switch
+			{
+				Parsed<Options> parsed => Run(parsed.Value),
+				NotParsed<Options> notParsed => HandleError(notParsed),
+				_ => 1
 			};
+		}
 
-			if (args.Length == 0)
-			{
-				ShowHelp(options);
-				return 1;
-			}
-
-			try
-			{
-				options.Parse(args);
-			}
-			catch (OptionException o)
-			{
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine(o);
-				Console.WriteLine("Try '--help' for more information.");
-				Console.ResetColor();
-				return 1;
-			}
-
-			if (_help)
-			{
-				ShowHelp(options);
-				return 0;
-			}
-
-			if (InputPaths.Count == 0)
-			{
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine("Must supply at least one input path using -i");
-				Console.ResetColor();
-				return 1;
-			}
-
-			if (OutputPaths.Count == 0)
-			{
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine("Must supply at least one output path using -o");
-				Console.ResetColor();
-				return 1;
-			}
-
-			if (InputPaths.Count != OutputPaths.Count)
+		private static int Run(Options options)
+		{
+			if (options.InputPaths.Count() != options.OutputPaths.Count())
 			{
 				Console.ForegroundColor = ConsoleColor.Red;
 				Console.WriteLine("Number of input paths must equal number of output paths");
@@ -92,8 +40,8 @@ namespace AssemblyRewriter
 
 			try
 			{
-				var rewriter = new AssemblyRewriter(_verbose);
-				rewriter.RewriteNamespaces(InputPaths, OutputPaths, ResolveDirectories);
+				var rewriter = new AssemblyRewriter(options);
+				rewriter.Rewrite(options.InputPaths, options.OutputPaths, options.ResolveDirectories);
 			}
 			catch (Exception e)
 			{
@@ -101,7 +49,7 @@ namespace AssemblyRewriter
 				Console.WriteLine(e);
 				return 1;
 			}
-			if (!_merge) return 0;
+			if (!options.Merge) return 0;
 			try
 			{
 				var repackOptions = new RepackOptions
@@ -110,11 +58,11 @@ namespace AssemblyRewriter
 					Closed = true,
 					KeepOtherVersionReferences = false,
 					TargetKind = ILRepack.Kind.SameAsPrimaryAssembly,
-					InputAssemblies = OutputPaths.ToArray(),
+					InputAssemblies = options.OutputPaths.ToArray(),
 					LineIndexation = true,
-					OutputFile = OutputPaths.First(),
-					KeyFile = _keyFile,
-					SearchDirectories = OutputPaths.Select(p=> new DirectoryInfo(p).FullName).Distinct()
+					OutputFile = options.OutputPaths.First(),
+					KeyFile = options.KeyFile,
+					SearchDirectories = options.OutputPaths.Select(p=> new DirectoryInfo(p).FullName).Distinct(),
 				};
 
 				var pack = new ILRepack(repackOptions, new RepackConsoleLogger());
@@ -129,17 +77,32 @@ namespace AssemblyRewriter
 			return 0;
 		}
 
-		private static void ShowHelp(OptionSet options)
+		private static int HandleError(NotParsed<Options> notParsed)
 		{
-			Console.ForegroundColor = ConsoleColor.Green;
-			Console.WriteLine("AssemblyRewriter");
-			Console.WriteLine("----------------");
-			Console.WriteLine("Rewrites assemblies and namespaces");
-			Console.WriteLine("Options:");
-			options.WriteOptionDescriptions(Console.Out);
-			Console.WriteLine();
-			Console.WriteLine("Each input path must have a corresponding output path");
+			var helpText = HelpText.AutoBuild(notParsed, h =>
+			{
+				h.AdditionalNewLineAfterOption = false;
+				h.Heading = "AssemblyRewriter" +
+				            Environment.NewLine +
+				            "----------------" +
+				            Environment.NewLine +
+				            "Rewrites assemblies and namespaces";
+				h.AddPostOptionsLine("Each input path must have a corresponding output path");
+				return HelpText.DefaultParsingErrorsHandler(notParsed, h);
+			}, e => e);
+
+			if (notParsed.Errors.IsHelp() || notParsed.Errors.IsVersion())
+			{
+				Console.ForegroundColor = ConsoleColor.Green;
+				Console.WriteLine(helpText);
+				Console.ResetColor();
+				return 0;
+			}
+
+			Console.ForegroundColor = ConsoleColor.Red;
+			Console.WriteLine(helpText);
 			Console.ResetColor();
+			return 1;
 		}
 	}
 }
