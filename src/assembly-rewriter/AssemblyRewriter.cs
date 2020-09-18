@@ -113,13 +113,18 @@ namespace AssemblyRewriter
 
 		private void RewriteGenericParameter(string assembly, GenericParameter genericParameter)
 		{
+			var name = RenameTypeName(genericParameter.Name);
+			Write(assembly, nameof(GenericParameter), $"{genericParameter.Name} to {name}");
+			genericParameter.Name = name;
+
 			foreach (var genericParameterConstraint in genericParameter.Constraints)
 			{
-				if (!IsRewritableType(genericParameterConstraint.Name)) continue;
+				var constraintTypeName = genericParameterConstraint.ConstraintType.Name;
+				if (!IsRewritableType(constraintTypeName)) continue;
 
-				var name = RenameTypeName(genericParameterConstraint.Name);
-				Write(assembly, nameof(GenericParameter), $"{genericParameter.Name} to {name}");
-				genericParameterConstraint.Name = name;
+				name = RenameTypeName(constraintTypeName);
+				Write(assembly, nameof(GenericParameterConstraint), $"{constraintTypeName} to {name}");
+				genericParameterConstraint.ConstraintType.Name = name;
 			}
 
 			foreach (var nestedGenericParameter in genericParameter.GenericParameters)
@@ -181,24 +186,14 @@ namespace AssemblyRewriter
 				assembly.Name.Name = newName;
 				var writerParameters = new WriterParameters();
 
-				// signing is currently supported only on Full Framework; accessing the public key
-				// of the StrongNameKeyPair will throw an exception on unsupported platforms.
 				if (!string.IsNullOrEmpty(_keyFile) && File.Exists(_keyFile))
 				{
 					Write(currentName, nameof(AssemblyDefinition),
 						$"signing {newName} with keyfile {_keyFile}");
 					var fileBytes = File.ReadAllBytes(_keyFile);
-					var strongNameKeyPair = new StrongNameKeyPair(fileBytes);
-					assembly.Name.PublicKey = strongNameKeyPair.PublicKey;
+					writerParameters.StrongNameKeyBlob = fileBytes;
 					assembly.Name.Attributes |= AssemblyAttributes.PublicKey;
 					assembly.MainModule.Attributes |= ModuleAttributes.StrongNameSigned;
-
-#if NET472
-					writerParameters.StrongNameKeyPair = strongNameKeyPair;
-#endif
-
-					Write(currentName, nameof(AssemblyDefinition),
-						$"signed {newName} with keyfile: {_keyFile}");
 				}
 
 				if (assemblyToRewrite.OutputPath == assemblyToRewrite.InputPath)
