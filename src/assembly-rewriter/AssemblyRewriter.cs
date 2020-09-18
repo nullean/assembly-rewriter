@@ -316,9 +316,17 @@ namespace AssemblyRewriter
 					if (propertyDefinition.SetMethod != null)
 						RewriteMethodDefinition(assembly, propertyDefinition.SetMethod);
 
+					// generic property
 					if (IsRewritableType((o, n) => propertyDefinition.Name.Contains($"<{o}.")))
 					{
 						var name = RenameTypeName(propertyDefinition.Name, (t, o, n) => t.Replace($"<{o}.", $"<{n}."));
+						Write(assembly, nameof(PropertyDefinition), $"{propertyDefinition.Name} to {name}");
+						propertyDefinition.Name = name;
+					}
+					// explicitly implemented interface properties
+					else if (IsRewritableType((o, n) => propertyDefinition.Name.Contains(o + ".")))
+					{
+						var name = RenameTypeName(propertyDefinition.Name);
 						Write(assembly, nameof(PropertyDefinition), $"{propertyDefinition.Name} to {name}");
 						propertyDefinition.Name = name;
 					}
@@ -326,6 +334,14 @@ namespace AssemblyRewriter
 
 				foreach (var fieldDefinition in typeDefinition.Fields)
 				{
+					// compiler generated backing field
+					if (IsRewritableType((o, n) => fieldDefinition.Name.Contains($"<{o}.")))
+					{
+						var name = RenameTypeName(fieldDefinition.Name, (t, o, n) => t.Replace($"<{o}.", $"<{n}."));
+						Write(assembly, nameof(PropertyDefinition), $"{fieldDefinition.Name} to {name}");
+						fieldDefinition.Name = name;
+					}
+
 					RewriteAttributes(assembly, fieldDefinition.CustomAttributes);
 					RewriteMemberReference(assembly, fieldDefinition);
 				}
@@ -355,12 +371,25 @@ namespace AssemblyRewriter
 			RewriteAttributes(assembly, methodDefinition.CustomAttributes);
 			RewriteMemberReference(assembly, methodDefinition);
 
+			if (IsRewritableType((o, n) => methodDefinition.Name.StartsWith(o + ".")))
+			{
+				var name = RenameTypeName(methodDefinition.Name);
+				Write(assembly, nameof(MethodDefinition), $"{methodDefinition.Name} to {name}");
+				methodDefinition.Name = name;
+			}
+
 			foreach (var methodDefinitionOverride in methodDefinition.Overrides)
 			{
 				// explicit interface implementation of generic interface
 				if (IsRewritableType((o, n) => methodDefinition.Name.Contains("<" + o)))
 				{
 					var name = RenameTypeName(methodDefinition.Name, (t, o, n) => t.Replace($"<{o}", $"<{n}"));
+					Write(assembly, nameof(MethodDefinition), $"{methodDefinition.Name} to {name}");
+					methodDefinition.Name = name;
+				}
+				else if (IsRewritableType((o, n) => methodDefinition.Name.Contains(o + ".")))
+				{
+					var name = RenameTypeName(methodDefinition.Name, (t, o, n) => t.Replace(o + ".", n + "."));
 					Write(assembly, nameof(MethodDefinition), $"{methodDefinition.Name} to {name}");
 					methodDefinition.Name = name;
 				}
@@ -409,7 +438,7 @@ namespace AssemblyRewriter
 						instruction.Operand = operandString;
 					}
 				}
-				// Compiler generated backing fields
+				// loading or storing compiler generated backing fields
 				else if (instruction.OpCode.Code == Code.Ldfld || instruction.OpCode.Code == Code.Stfld)
 				{
 					var fieldReference = (FieldReference) instruction.Operand;
