@@ -15,6 +15,7 @@ namespace AssemblyRewriter
 			{
 				settings.HelpWriter = null;
 				settings.IgnoreUnknownArguments = false;
+				settings.AllowMultiInstance = true;
 			});
 
 			var result = parser.ParseArguments<Options>(args);
