@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp3.0;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net472;netcoreapp3.0;netcoreapp3.1</TargetFrameworks>
     <AssemblyName>assembly-rewriter</AssemblyName>
     <RootNamespace>AssemblyRewriter</RootNamespace>
     <PackAsTool>true</PackAsTool>
@@ -18,6 +18,7 @@
 
     <Title>assembly-rewriter: a dotnet tool to rewrite assembly namespaces</Title>
     <Description>Diff assemblies and nuget packages</Description>
+    <LangVersion>latest</LangVersion>
 
   </PropertyGroup>
 
@@ -30,8 +31,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="ILRepack.Lib" Version="2.0.18" />
     <PackageReference Include="Mono.Cecil" Version="0.10.0" />
-    <PackageReference Include="Mono.Options" Version="5.3.0.1" />
   </ItemGroup>
 </Project>

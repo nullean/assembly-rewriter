@@ -12,11 +12,17 @@ namespace AssemblyRewriter
 	public class AssemblyRewriter
 	{
 		private readonly bool _verbose;
+		private readonly string _keyFile;
 		private Dictionary<string, string> _renames = new Dictionary<string, string>();
 
-		public AssemblyRewriter(bool verbose) => _verbose = verbose;
+		public AssemblyRewriter(Options options)
+		{
+			_verbose = options.Verbose;
+			// if a keyfile has been passed but no merge argument, use it to sign the rewritten assembly
+			_keyFile = !string.IsNullOrEmpty(options.KeyFile) && !options.Merge ? options.KeyFile : null;
+		}
 
-		public void RewriteNamespaces(
+		public void Rewrite(
 			IEnumerable<string> inputPaths,
 			IEnumerable<string> outputPaths,
 			IEnumerable<string> additionalResolveDirectories
@@ -41,11 +47,11 @@ namespace AssemblyRewriter
 		private string RenameTypeName(string typeName, Func<string, string, string, string> replace = null)
 		{
 			replace ??= ((t, o, n) => t.Replace(o, n));
-			foreach (var (key, value) in _renames)
+			foreach (var kv in _renames)
 			{
 				//safeguard e.g Nest7 to be renamed to Nest77
-				if (typeName.StartsWith(value)) continue;
-				var n = replace(typeName, key, value);
+				if (typeName.StartsWith(kv.Value)) continue;
+				var n = replace(typeName, kv.Key, kv.Value);
 				if (typeName != n) return n;
 			}
 
@@ -173,17 +179,39 @@ namespace AssemblyRewriter
 
 				RewriteAssemblyTitleAttribute(assembly, currentName, newName);
 				assembly.Name.Name = newName;
+				var writerParameters = new WriterParameters();
+
+				// signing is currently supported only on Full Framework; accessing the public key
+				// of the StrongNameKeyPair will throw an exception on unsupported platforms.
+				if (!string.IsNullOrEmpty(_keyFile) && File.Exists(_keyFile))
+				{
+					Write(currentName, nameof(AssemblyDefinition),
+						$"signing {newName} with keyfile {_keyFile}");
+					var fileBytes = File.ReadAllBytes(_keyFile);
+					var strongNameKeyPair = new StrongNameKeyPair(fileBytes);
+					assembly.Name.PublicKey = strongNameKeyPair.PublicKey;
+					assembly.Name.Attributes |= AssemblyAttributes.PublicKey;
+					assembly.MainModule.Attributes |= ModuleAttributes.StrongNameSigned;
+
+#if NET472
+					writerParameters.StrongNameKeyPair = strongNameKeyPair;
+#endif
+
+					Write(currentName, nameof(AssemblyDefinition),
+						$"signed {newName} with keyfile: {_keyFile}");
+				}
+
 				if (assemblyToRewrite.OutputPath == assemblyToRewrite.InputPath)
 				{
 					tempOutputPath = assemblyToRewrite.OutputPath + ".temp";
-					assembly.Write(tempOutputPath);
+					assembly.Write(tempOutputPath, writerParameters);
 					assemblyToRewrite.Rewritten = true;
 					Write(currentName, nameof(AssemblyDefinition),
 						$"finished rewriting {currentName} into {tempOutputPath}");
 				}
 				else
 				{
-					assembly.Write(assemblyToRewrite.OutputPath);
+					assembly.Write(assemblyToRewrite.OutputPath, writerParameters);
 					assemblyToRewrite.Rewritten = true;
 					Write(currentName, nameof(AssemblyDefinition),
 						$"finished rewriting {currentName} into {assemblyToRewrite.OutputPath}");
@@ -433,7 +461,7 @@ namespace AssemblyRewriter
 				case nameof(AssemblyDefinition):
 				case nameof(AssemblyNameReference):
 				case nameof(AssemblyTitleAttribute):
-				case nameof(RewriteNamespaces):
+				case nameof(Rewrite):
 					Write();
 					break;
 				default:
