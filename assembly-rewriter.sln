@@ -12,6 +12,7 @@ ProjectSection(SolutionItems) = preProject
 	global.json = global.json
 	Directory.Build.props = Directory.Build.props
 	.github\workflows\ci.yml = .github\workflows\ci.yml
+	dotnet-tools.json = dotnet-tools.json
 EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{32D9729D-0ACB-4F0F-A3D8-2194FAE4A8C8}"
