@@ -14,6 +14,10 @@ on:
     tags:
       - "*.*.*"
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -32,7 +36,7 @@ jobs:
           6.0.x
     - uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.100'
+        dotnet-version: '6.0.302'
         source-url: https://nuget.pkg.github.com/nullean/index.json
       env:
         NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
@@ -49,6 +53,8 @@ jobs:
     - name: publish to github package repository
       if: github.event_name == 'push' && startswith(github.ref, 'refs/heads')
       shell: bash
+      timeout-minutes: 10
+      continue-on-error: true
       run:  |
          until dotnet nuget push build/output/*.nupkg -k ${{secrets.GITHUB_TOKEN}} --skip-duplicate --no-symbols true; do echo "Retrying"; sleep 1; done;
 
