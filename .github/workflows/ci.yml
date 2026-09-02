@@ -15,25 +15,54 @@ on:
       - "*.*.*"
 
 jobs:
+  # On pull requests, only linux-x64 runs, to prove AOT still links without burning the full matrix
+  # on packages nobody sees. All five run on push, where the packages are actually uploaded.
+  aot-pack:
+    runs-on: ${{ matrix.runner }}
+    name: AOT pack (${{ matrix.rid }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(github.event_name == 'pull_request'
+          && '[{"rid":"linux-x64","runner":"ubuntu-latest"}]'
+          || '[{"rid":"linux-x64","runner":"ubuntu-latest"},{"rid":"linux-arm64","runner":"ubuntu-24.04-arm"},{"rid":"win-x64","runner":"windows-latest"},{"rid":"win-arm64","runner":"windows-11-arm"},{"rid":"osx-arm64","runner":"macos-latest"}]') }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            10.0.x
+
+      - run: dotnet pack src/assembly-rewriter/assembly-rewriter.csproj -c Release -r ${{ matrix.rid }} -o build/output
+        name: Pack native-AOT tool for ${{ matrix.rid }}
+        shell: bash
+
+      - name: Upload per-RID package
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg-${{ matrix.rid }}
+          path: build/output/*.nupkg
+          if-no-files-found: error
+
   build:
     runs-on: ubuntu-latest
+    needs: aot-pack
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 1
     - run: |
         git fetch --prune --unshallow --tags
         echo exit code $?
         git tag --list
-    - uses: actions/setup-dotnet@v1
+    - uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: |
-          5.0.x
-          6.0.x
-    - uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '6.0.302'
-        source-url: https://nuget.pkg.github.com/nullean/index.json
+          dotnet-version: |
+            10.0.x
+          source-url: https://nuget.pkg.github.com/nullean/index.json
       env:
         NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
         
@@ -41,6 +70,15 @@ jobs:
       name: Build
     - run: ./build.sh generatepackages -s true
       name: Generate local nuget packages
+
+    - name: Download per-RID AOT packages
+      if: github.event_name == 'push'
+      uses: actions/download-artifact@v4
+      with:
+        pattern: nupkg-*
+        path: build/output
+        merge-multiple: true
+
     - run: ./build.sh validatepackages -s true
       name: "validate *.npkg files that were created"
     - run: ./build.sh generateapichanges -s true
