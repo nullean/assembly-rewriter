@@ -1,14 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netcoreapp3.0;netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <AssemblyName>assembly-rewriter</AssemblyName>
     <RootNamespace>AssemblyRewriter</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- AssemblyRewriter.cs, AssemblyToRewrite.cs, Options.cs, and RepackConsoleLogger.cs predate nullable
+         annotations and are otherwise untouched by this modernization; only Program.cs (rewritten for
+         Nullean.Argh) is nullable-clean. -->
+    <NoWarn>$(NoWarn);CS8600;CS8601;CS8603;CS8604;CS8618;CS8625</NoWarn>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>assembly-rewriter</ToolCommandName>
+    <RollForward>Major</RollForward>
+    <LangVersion>latest</LangVersion>
 
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\..\build\keys\keypair.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\..\build\keys\keypair.snk</AssemblyOriginatorKeyFile>
 
     <PackageIcon>nuget-icon.png</PackageIcon>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -18,8 +26,21 @@
 
     <Title>assembly-rewriter: a dotnet tool to rewrite assembly namespaces</Title>
     <Description>Diff assemblies and nuget packages</Description>
-    <LangVersion>latest</LangVersion>
 
+    <!-- Native-AOT tool packaging: one package per RID plus an 'any' framework-dependent fallback.
+         The root package's DotnetToolSettings.xml (v2) maps each RID to its per-RID package.
+         Installing requires the .NET 10 SDK or greater. -->
+    <RuntimeIdentifiers>linux-x64;linux-arm64;win-x64;win-arm64;osx-arm64;any</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <!-- AOT settings apply only when a specific RID is targeted (dotnet pack -r <rid>). Without this
+       guard they get baked into the runtimeconfig.json of the portable 'any' fallback too. Signing is
+       skipped for the same reason: a native-AOT build has no loadable managed assembly to sign. -->
+  <PropertyGroup Condition="'$(RuntimeIdentifier)' != ''">
+    <PublishAot>true</PublishAot>
+    <PublishSelfContained>true</PublishSelfContained>
+    <StripSymbols>true</StripSymbols>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,7 +52,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommandLineParser" Version="2.9.0-preview1" />
+    <PackageReference Include="Nullean.Argh" Version="0.18.0" />
     <PackageReference Include="ILRepack.Lib" Version="2.0.18" />
     <PackageReference Include="Mono.Cecil" Version="0.11.3" />
   </ItemGroup>
