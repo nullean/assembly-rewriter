@@ -1,0 +1,14 @@
+name: 'assembly-rewriter'
+description: 'Rewrite a .NET assembly namespace so two versions of the same assembly can be referenced side by side'
+branding:
+  icon: 'git-branch'
+  color: 'blue'
+inputs:
+  args:
+    description: 'Arguments passed through to assembly-rewriter verbatim, e.g. "-i Nest.dll -o Nest620.dll"'
+    required: true
+runs:
+  using: 'docker'
+  image: 'docker://ghcr.io/nullean/assembly-rewriter:edge'
+  args:
+    - ${{ inputs.args }}

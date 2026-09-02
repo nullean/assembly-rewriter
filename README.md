@@ -29,6 +29,33 @@ dotnet assembly-rewriter
 
 You can omit `dotnet` if you install this as a global tool
 
+## GitHub Action
+
+```yaml
+- uses: nullean/assembly-rewriter@main
+  with:
+    args: -i Nest.dll -o Nest620.dll
+```
+
+Runs `assembly-rewriter` from a pre-built, distroless container (`ghcr.io/nullean/assembly-rewriter`) —
+no .NET SDK install needed in the workflow. `args` is the full command line, since every input and
+output path is passed as an `-i`/`-o` pair (see below). Mount your working directory's DLLs where the
+container can see them; a container action's default working directory already maps to the workflow's
+checkout. Linux runners only (`ubuntu-latest` and similar) — container actions can't run on Windows or
+macOS runners.
+
+## Container image
+
+`ghcr.io/nullean/assembly-rewriter` also works as a general-purpose container, outside GitHub Actions —
+GitLab CI, a local machine without the .NET SDK, anywhere `docker run` works:
+
+```sh
+docker run --rm -v "$(pwd)":/workspace ghcr.io/nullean/assembly-rewriter:edge -i /workspace/Nest.dll -o /workspace/Nest620.dll
+```
+
+Distroless: native-AOT, chiseled `runtime-deps` base, no shell, runs as a non-root user. Tags follow
+`assembly-rewriter`'s own releases — `edge` tracks the latest commit on `master`, `latest` and a semver
+tag follow tagged releases.
 
 ## Examples
 
