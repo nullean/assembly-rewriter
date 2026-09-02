@@ -11,10 +11,22 @@ open ProcNet
 
     
 let exec binary args =
-    let r = Proc.Exec (binary, args |> List.map (fun a -> sprintf "\"%s\"" a) |> List.toArray)
-    match r.HasValue with | true -> r.Value | false -> failwithf "invocation of `%s` timed out" binary
+    // Proc 0.14+: Exec passes args directly to the OS (no shell expansion) and throws on failure.
+    // The old per-arg quoting (sprintf "\"%s\"" a) was a workaround for Proc 0.6.2's shell-based
+    // invocation; kept unquoted here it corrupted MSBuild property values that themselves needed
+    // embedded quotes, e.g. -p:ContainerImageTags="edge;latest;1.0.0" (see publishContainers below).
+    Proc.Exec (binary, List.toArray args) |> ignore
     
-let private restoreTools = lazy(exec "dotnet" ["tool"; "restore"])
+/// dotnet/sdk#53783: on a cold tool-resolver cache (every fresh CI runner, every fresh container),
+/// restoring 2+ RID-specific tool packages in one manifest can misattribute one package's
+/// DotnetToolSettings.xml to another, failing with "The command ... is not contained in the
+/// package ...". The cache is warm after the first attempt, so a bare retry always succeeds -
+/// see https://github.com/dotnet/sdk/issues/53783.
+let private restoreTools =
+    lazy(
+        try exec "dotnet" ["tool"; "restore"]
+        with _ -> exec "dotnet" ["tool"; "restore"]
+    )
 let private currentVersion =
     lazy(
         restoreTools.Value |> ignore
@@ -118,11 +130,12 @@ let private generateReleaseNotes (arguments:ParseResults<Arguments>) =
         | None -> []
         | Some token -> ["--token"; token;]
     let releaseNotesArgs =
-        (Paths.Repository.Split("/") |> Seq.toList)
+        ["generate"]
+        @ (Paths.Repository.Split("/") |> Seq.toList)
         @ ["--version"; currentVersion
-           "--label"; "enhancement"; "New Features"
-           "--label"; "bug"; "Bug Fixes"
-           "--label"; "documentation"; "Docs Improvements"
+           "--label"; "enhancement=New Features"
+           "--label"; "bug=Bug Fixes"
+           "--label"; "documentation=Docs Improvements"
         ] @ tokenArgs
         @ ["--output"; output]
         
@@ -137,9 +150,9 @@ let private createReleaseOnGithub (arguments:ParseResults<Arguments>) =
     let releaseNotes = Paths.RootRelative <| Path.Combine(Paths.Output.FullName, sprintf "release-notes-%s.md" currentVersion)
     let breakingChanges = Paths.RootRelative <| Path.Combine(Paths.Output.FullName, "github-breaking-changes-comments.md")
     let releaseArgs =
-        (Paths.Repository.Split("/") |> Seq.toList)
-        @ ["create-release"
-           "--version"; currentVersion
+        ["create-release"]
+        @ (Paths.Repository.Split("/") |> Seq.toList)
+        @ ["--version"; currentVersion
            "--body"; releaseNotes; 
            "--body"; breakingChanges; 
         ] @ tokenArgs
