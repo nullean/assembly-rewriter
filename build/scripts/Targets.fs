@@ -114,7 +114,11 @@ let private generateApiChanges (arguments:ParseResults<Arguments>) =
     let args =
         [
             "assembly-differ"
-            (sprintf "previous-nuget|%s|%s|net10.0" Paths.ToolName currentVersion);
+            // The plain "assembly-rewriter" package id is just a DotnetToolSettings.xml v2 shim
+            // pointing at per-RID sub-packages (see generatePackages above) - it ships no managed
+            // assembly of its own, so NuGetAssemblyProvider would find 0 assemblies there. The
+            // portable, signed managed build lives in "assembly-rewriter.any" instead.
+            (sprintf "previous-nuget|%s.any|%s|net10.0" Paths.ToolName currentVersion);
             (sprintf "directory|src/%s/bin/Release/net10.0" Paths.ToolName);
             "--target"; Paths.ToolName; "-f"; "github-comment"; "--output"; output
         ]
