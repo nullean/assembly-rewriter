@@ -120,6 +120,10 @@ let private generateApiChanges (arguments:ParseResults<Arguments>) =
             // portable, signed managed build lives in "assembly-rewriter.any" instead.
             (sprintf "previous-nuget|%s.any|%s|net10.0" Paths.ToolName currentVersion);
             (sprintf "directory|src/%s/bin/Release/net10.0" Paths.ToolName);
+            // "assembly-rewriter.any" doesn't exist on nuget.org yet - the 0.14.0 release that would
+            // have published it failed before reaching the nuget push. Don't fail this first-ever
+            // diff against it; once a version is published this is a no-op.
+            "-a"; "true"
             "--target"; Paths.ToolName; "-f"; "github-comment"; "--output"; output
         ]
         
