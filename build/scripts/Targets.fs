@@ -155,15 +155,21 @@ let private createReleaseOnGithub (arguments:ParseResults<Arguments>) =
         match arguments.TryGetResult Token with
         | None -> []
         | Some token -> ["--token"; token;]
-    let releaseNotes = Paths.RootRelative <| Path.Combine(Paths.Output.FullName, sprintf "release-notes-%s.md" currentVersion)
-    let breakingChanges = Paths.RootRelative <| Path.Combine(Paths.Output.FullName, "github-breaking-changes-comments.md")
+    let releaseNotes = Path.Combine(Paths.Output.FullName, sprintf "release-notes-%s.md" currentVersion)
+    let breakingChanges = Path.Combine(Paths.Output.FullName, "github-breaking-changes-comments.md")
+    // generateApiChanges only writes this file when there was an actual previous package to diff
+    // against - the first release under a new/renamed package id (like assembly-rewriter.any right
+    // now) has none, and release-notes hard-fails on a --body path that doesn't exist.
+    let bodyArgs =
+        [releaseNotes; breakingChanges]
+        |> List.filter File.Exists
+        |> List.collect (fun f -> ["--body"; Paths.RootRelative f])
     let releaseArgs =
         ["create-release"]
         @ (Paths.Repository.Split("/") |> Seq.toList)
-        @ ["--version"; currentVersion
-           "--body"; releaseNotes; 
-           "--body"; breakingChanges; 
-        ] @ tokenArgs
+        @ ["--version"; currentVersion]
+        @ bodyArgs
+        @ tokenArgs
         
     exec "dotnet" (["release-notes"] @ releaseArgs) |> ignore
     
