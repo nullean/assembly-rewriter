@@ -1,35 +1,92 @@
-# assembly-rewriter
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nullean/nullean.github.io/main/assets/nullean-lockup-544x192.png">
+    <img src="https://raw.githubusercontent.com/nullean/nullean.github.io/main/assets/nullean-lockup-light-544x192.png" width="272" alt="nullean">
+  </picture>
+</p>
 
-Rewrites .NET assemblies with [Mono.Cecil](https://www.mono-project.com/docs/tools+libraries/libraries/Mono.Cecil/), to allow two different versions of the same assembly to be referenced within an application.
- 
-It assumes that the assembly DLL name is the top level namespace and rewrites
+<h1 align="center">assembly-rewriter</h1>
 
-1. the top level namespace for all types within the assembly
-2. assemblies in the order of dependencies first
-3. IL `ldstr` op codes if they start with the namespace
-4. compiler generated backing fields
+<p align="center">Rename the top-level namespace of .NET assemblies, and the references between them, so two versions of the same assembly can be referenced side by side.</p>
 
-This small program was written to allow different versions [Elasticsearch .NET clients](https://github.com/elastic/elasticsearch-net) to be rewritten for benchmark comparisons. 
-Your mileage may vary rewriting other assemblies :)
+<p align="center">
+  <a href="https://www.nuget.org/packages/assembly-rewriter"><img src="https://img.shields.io/nuget/v/assembly-rewriter?style=flat-square" alt="NuGet"></a>
+  <a href="https://github.com/nullean/assembly-rewriter/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/nullean/assembly-rewriter/ci.yml?branch=main&style=flat-square&label=ci" alt="CI"></a>
+</p>
 
-## Installation
+Rewriting NEST 6.2.0 and the Elasticsearch.Net 6.2.0 it depends on, both taken from nuget.org. The per-reference lines are
+left out and the paths shortened:
 
-
-Distributed as a .NET tool so install using the following
-
+```console
+$ assembly-rewriter rewrite -i in/Nest.dll -o out/Nest620.dll -i in/Elasticsearch.Net.dll -o out/Elasticsearch.Net620.dll
+[2026-11-11T22:21:41.37+01:00][Nest              ][AssemblyDefinition     ] rewriting Nest from …/in/Nest.dll
+[2026-11-11T22:21:41.39+01:00][Nest              ][AssemblyNameReference  ] Elasticsearch.Net will be rewritten first
+[2026-11-11T22:21:41.39+01:00][Elasticsearch.Net ][AssemblyDefinition     ] rewriting Elasticsearch.Net from …/in/Elasticsearch.Net.dll
+[2026-11-11T22:21:41.53+01:00][Elasticsearch.Net ][AssemblyTitleAttribute ] Elasticsearch.Net to Elasticsearch.Net620
+[2026-11-11T22:21:41.60+01:00][Elasticsearch.Net ][AssemblyDefinition     ] finished rewriting Elasticsearch.Net into …/out/Elasticsearch.Net620.dll
+[2026-11-11T22:21:43.20+01:00][Nest              ][AssemblyTitleAttribute ] Nest to Nest620
+[2026-11-11T22:21:43.20+01:00][Nest              ][AssemblyDefinition     ] finished rewriting Nest into …/out/Nest620.dll
 ```
-dotnet tool install assembly-rewriter
+
+`Nest620.dll` now declares `Nest620.*` types and references `Elasticsearch.Net620`, so it can sit next to any other
+version of `Nest.dll` in one project.
+
+## Install
+
+```sh
+dotnet tool install --global assembly-rewriter
 ```
 
-## Run 
+On Linux (x64, arm64), Windows (x64, arm64) and macOS (arm64) this installs a self-contained native-AOT executable: no
+shared .NET runtime, no JIT warm-up. Everywhere else it falls back to a framework-dependent build, which needs the .NET
+runtime installed.
 
-```bat
-dotnet assembly-rewriter
+## Quick start
+
+```sh
+assembly-rewriter rewrite -i lib/Nest.dll -o out/Nest620.dll
 ```
 
-You can omit `dotnet` if you install this as a global tool
+The tool assumes the dll's name is its top-level namespace, and takes the new namespace from the output file name. It
+rewrites, with [Mono.Cecil](https://github.com/jbevain/cecil):
 
-## GitHub Action
+1. the top-level namespace of every type in the assembly;
+2. the assemblies in dependency order, dependencies first;
+3. IL `ldstr` string literals that start with the namespace;
+4. compiler-generated backing fields.
+
+Both versions of NEST depend on `Elasticsearch.Net.dll`, so rewrite that dependency in the same call. The references
+to it inside NEST are then updated to the rewritten assembly:
+
+```sh
+assembly-rewriter rewrite -i lib/Nest.dll -o out/Nest620.dll -i lib/Elasticsearch.Net.dll -o out/Elasticsearch.Net620.dll
+```
+
+Add any other direct dependency that would clash (say `-i lib/Newtonsoft.Json.dll -o out/Newtonsoft.Json620.dll`) the
+same way. Only references between the assemblies passed with `-i` are rewritten.
+
+| Option | What |
+|---|---|
+| `-i`, `--in` | an assembly to rewrite (repeatable) |
+| `-o`, `--out` | where its rewritten copy goes (repeatable); `-i` and `-o` pair up by position and their counts must match |
+| `-r`, `--resolvedir` | an extra directory to resolve dependencies that are not rewritten from (repeatable) |
+| `-k`, `--keyfile` | strong-name sign the rewritten assemblies, or the merged one with `-m`, with this key file |
+| `-m`, `--merge` | merge every rewritten assembly into the first `-o` path |
+| `-v`, `--verbose` | verbose output |
+
+This was written to benchmark different versions of the
+[Elasticsearch .NET clients](https://github.com/elastic/elasticsearch-net) against each other. Your mileage may vary
+with other assemblies: type names held in strings that do not start with the namespace are not rewritten.
+
+Check that everything expected was rewritten with the
+[IL Disassembler](https://learn.microsoft.com/dotnet/framework/tools/ildasm-exe-il-disassembler):
+
+```powershell
+ildasm <rewritten>.dll /OUT=<rewritten>.il /NOBAR
+Select-String -Path <rewritten>.il -Pattern '<original namespace>\.' -AllMatches | ft LineNumber,Line
+```
+
+### GitHub Action
 
 ```yaml
 - uses: nullean/assembly-rewriter@main
@@ -37,60 +94,36 @@ You can omit `dotnet` if you install this as a global tool
     args: -i Nest.dll -o Nest620.dll
 ```
 
-Runs `assembly-rewriter` from a pre-built, distroless container (`ghcr.io/nullean/assembly-rewriter`) —
-no .NET SDK install needed in the workflow. `args` is the full command line, since every input and
-output path is passed as an `-i`/`-o` pair (see below). Mount your working directory's DLLs where the
-container can see them; a container action's default working directory already maps to the workflow's
-checkout. Linux runners only (`ubuntu-latest` and similar) — container actions can't run on Windows or
-macOS runners.
+The action runs `assembly-rewriter <args>` in the prebuilt, distroless `ghcr.io/nullean/assembly-rewriter:edge`
+container, so the workflow needs no .NET SDK. `args` is the whole command line, since every path is an `-i`/`-o` pair.
+The container's working directory is the workflow's checkout. Container actions run on Linux runners only.
 
-## Container image
+### Container
 
-`ghcr.io/nullean/assembly-rewriter` also works as a general-purpose container, outside GitHub Actions —
-GitLab CI, a local machine without the .NET SDK, anywhere `docker run` works:
+The same image works anywhere `docker run` does, such as GitLab CI or a machine without the .NET SDK:
 
 ```sh
 docker run --rm -v "$(pwd)":/workspace ghcr.io/nullean/assembly-rewriter:edge -i /workspace/Nest.dll -o /workspace/Nest620.dll
 ```
 
-Distroless: native-AOT, chiseled `runtime-deps` base, no shell, runs as a non-root user. Tags follow
-`assembly-rewriter`'s own releases — `edge` tracks the latest commit on `main`, `latest` and a semver
-tag follow tagged releases.
+It is native-AOT on a chiseled `runtime-deps` base, with no shell, running as a non-root user. `edge` tracks the latest
+build of `main`; `latest` and the version tags follow releases.
 
-## Examples
+## Packages
 
-Rewrite [NEST, the Elasticsearch .NET high level client](https://github.com/elastic/elasticsearch-net), version 6.2.0
+The tool ships as one package per platform. Install the root package; the .NET SDK picks the right one.
 
-```c#
-assembly-rewriter -i C:/Nest.dll -o C:/Nest620.dll
-```
+| Package | What it is | |
+|---|---|---|
+| [`assembly-rewriter`](src/assembly-rewriter/README.md) | the tool; points the SDK at the package for your platform | [![NuGet](https://img.shields.io/nuget/v/assembly-rewriter?style=flat-square)](https://www.nuget.org/packages/assembly-rewriter) |
+| `assembly-rewriter.<rid>` | the native-AOT build for `linux-x64`, `linux-arm64`, `win-x64`, `win-arm64` and `osx-arm64` | [![NuGet](https://img.shields.io/nuget/v/assembly-rewriter.linux-x64?style=flat-square)](https://www.nuget.org/packages/assembly-rewriter.linux-x64) |
+| `assembly-rewriter.any` | the framework-dependent fallback (net8.0, net10.0) for every other platform | [![NuGet](https://img.shields.io/nuget/v/assembly-rewriter.any?style=flat-square)](https://www.nuget.org/packages/assembly-rewriter.any) |
 
-Now, `Nest620.dll` and another version of `Nest.dll` can be referenced in the same project. 
+The packages also carry an agent skill (`skills/assembly-rewriter/SKILL.md`).
 
-There's _a small issue here_ however; both versions of NEST rely on `Elasticsearch.Net.dll`, so we should also rewrite
-this dependency at the same time, and update the references to Elasticsearch.Net within NEST to reference the new rewritten assembly
+## Learn more
 
-```c#
-assembly-rewriter -i C:/Nest.dll -o C:/Nest620.dll -i C:/Elasticsearch.Net.dll -o C:/Elasticsearch.Net620.dll
-```
+- [Releases](https://github.com/nullean/assembly-rewriter/releases)
+- [Contributing](https://github.com/nullean/.github/blob/main/CONTRIBUTING.md)
 
-Great! Now we can reference both in the same project.
-
-If there are other direct dependencies that may version clash, these can be passed as well
-
-```c#
-assembly-rewriter -i C:/Nest.dll -o C:/Nest620.dll -i C:/Elasticsearch.Net.dll -o C:/Elasticsearch.Net620.dll -i C:/Newtonsoft.Json.dll -o C:/Newtonsoft.Json620.dll
-```
-
-## Rewrite validation
-
-You can check to see if everything expected has been rewritten using [IL Disassembler](https://docs.microsoft.com/en-us/dotnet/framework/tools/ildasm-exe-il-disassembler)
-
-```powershell
-ildasm <rewritten>.dll /OUT=<rewritten>.il /NOBAR
-Select-String -Path <rewritten>.il -Pattern '<original namespace>\.' -AllMatches | ft LineNumber,Line
-```
-
-## License
-
-[Apache 2.0](License.txt)
+MIT licensed. Copyright Nullean and contributors.
