@@ -16,7 +16,7 @@ let ManagedTargetFrameworks = ["net8.0"; "net10.0"]
 
 let Root =
     let mutable dir = DirectoryInfo(".")
-    while dir.GetFiles("*.sln").Length = 0 do dir <- dir.Parent
+    while dir.GetFiles("*.slnx").Length = 0 do dir <- dir.Parent
     Environment.CurrentDirectory <- dir.FullName
     dir
     

@@ -54,7 +54,7 @@ docker run --rm -v "$(pwd)":/workspace ghcr.io/nullean/assembly-rewriter:edge -i
 ```
 
 Distroless: native-AOT, chiseled `runtime-deps` base, no shell, runs as a non-root user. Tags follow
-`assembly-rewriter`'s own releases — `edge` tracks the latest commit on `master`, `latest` and a semver
+`assembly-rewriter`'s own releases — `edge` tracks the latest commit on `main`, `latest` and a semver
 tag follow tagged releases.
 
 ## Examples

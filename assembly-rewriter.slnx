@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/build/">
+    <File Path=".github/workflows/ci.yml" />
+    <File Path="AGENTS.md" />
+    <File Path="mise.toml" />
+    <File Path="Directory.Build.props" />
+    <File Path="dotnet-tools.json" />
+    <File Path="global.json" />
+    <File Path="LICENSE" />
+    <File Path="nuget-icon.png" />
+    <File Path="README.md" />
+    <Project Path="build/scripts/scripts.fsproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/assembly-rewriter/assembly-rewriter.csproj" />
+  </Folder>
+</Solution>
