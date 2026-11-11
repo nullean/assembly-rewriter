@@ -8,12 +8,6 @@
         "minver"
       ]
     },
-    "release-notes": {
-      "version": "0.11.4",
-      "commands": [
-        "release-notes"
-      ]
-    },
     "nupkg-validator": {
       "version": "0.10.1",
       "commands": [

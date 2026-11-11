@@ -22,9 +22,19 @@ mise run build    # build the solution
 mise run pack     # build, pack the root and `any` packages, validate them, report public API changes
 mise run ci       # exactly what CI runs: build, then pack (there are no tests)
 mise run check    # workflow security checks (zizmor)
+mise run release  # show the release draft; `mise run release publish` releases
 ```
 
-`mise tasks ls` lists them all. Package output goes to `build/output`.
+`mise tasks ls` lists them all. Package output goes to `build/output`. Versions live in `Directory.Packages.props`
+(Central Package Management).
+
+## Releasing
+
+release-drafter keeps a draft release up to date from the labels of merged pull requests. **Publishing the draft**
+releases: it creates the tag, and `ci.yml` builds the per-RID AOT packages, packs at that version, pushes the container
+image and pushes all seven packages to nuget.org with trusted publishing. Every pull request carries exactly one
+release label. The [releasing](.claude/skills/releasing/SKILL.md) and
+[breaking-changes](.claude/skills/breaking-changes/SKILL.md) skills have the details.
 
 ## Rules
 

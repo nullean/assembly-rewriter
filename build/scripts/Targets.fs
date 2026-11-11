@@ -48,11 +48,6 @@ let private clean (arguments:ParseResults<Arguments>) =
     
 let private build (arguments:ParseResults<Arguments>) = exec "dotnet" ["build"; "-c"; "Release"] |> ignore
 
-let private pristineCheck (arguments:ParseResults<Arguments>) =
-    match Information.isCleanWorkingCopy "." with
-    | true  -> printfn "The checkout folder does not have pending changes, proceeding"
-    | _ -> failwithf "The checkout folder has pending changes, aborting"
-
 let private isPerRidPackage (name: string) =
     Paths.AotRuntimeIdentifiers |> List.exists (fun rid -> name.Contains(sprintf ".%s." rid))
 
@@ -133,50 +128,6 @@ let private generateApiChanges (arguments:ParseResults<Arguments>) =
         
     exec "dotnet" args |> ignore
     
-let private generateReleaseNotes (arguments:ParseResults<Arguments>) =
-    let currentVersion = currentVersion.Value
-    let output =
-        Paths.RootRelative <| Path.Combine(Paths.Output.FullName, sprintf "release-notes-%s.md" currentVersion)
-    let tokenArgs =
-        match arguments.TryGetResult Token with
-        | None -> []
-        | Some token -> ["--token"; token;]
-    let releaseNotesArgs =
-        ["generate"]
-        @ (Paths.Repository.Split("/") |> Seq.toList)
-        @ ["--version"; currentVersion
-           "--label"; "enhancement=New Features"
-           "--label"; "bug=Bug Fixes"
-           "--label"; "documentation=Docs Improvements"
-        ] @ tokenArgs
-        @ ["--output"; output]
-        
-    exec "dotnet" (["release-notes"] @ releaseNotesArgs) |> ignore
-
-let private createReleaseOnGithub (arguments:ParseResults<Arguments>) =
-    let currentVersion = currentVersion.Value
-    let tokenArgs =
-        match arguments.TryGetResult Token with
-        | None -> []
-        | Some token -> ["--token"; token;]
-    let releaseNotes = Path.Combine(Paths.Output.FullName, sprintf "release-notes-%s.md" currentVersion)
-    let breakingChanges = Path.Combine(Paths.Output.FullName, "github-breaking-changes-comments.md")
-    // generateApiChanges only writes this file when there was an actual previous package to diff
-    // against - the first release under a new/renamed package id (like assembly-rewriter.any right
-    // now) has none, and release-notes hard-fails on a --body path that doesn't exist.
-    let bodyArgs =
-        [releaseNotes; breakingChanges]
-        |> List.filter File.Exists
-        |> List.collect (fun f -> ["--body"; Paths.RootRelative f])
-    let releaseArgs =
-        ["create-release"]
-        @ (Paths.Repository.Split("/") |> Seq.toList)
-        @ ["--version"; currentVersion]
-        @ bodyArgs
-        @ tokenArgs
-        
-    exec "dotnet" (["release-notes"] @ releaseArgs) |> ignore
-    
 /// Tags for the container image, mirroring the versioning currentVersion already derives from git:
 /// "edge" always (so `ghcr.io/nullean/assembly-rewriter:edge` is always the latest master build), plus
 /// "latest" and the plain semver when this is an exact release tag rather than a canary commit —
@@ -216,10 +167,6 @@ let private publishContainers (arguments:ParseResults<Arguments>) =
         @ registryArgs
     exec "dotnet" args |> ignore
 
-let private release (arguments:ParseResults<Arguments>) = printfn "release"
-    
-let private publish (arguments:ParseResults<Arguments>) = printfn "publish" 
-
 let Setup (parsed:ParseResults<Arguments>) (subCommand:Arguments) =
     let step (name:string) action = Targets.Target(name, new Action(fun _ -> action(parsed)))
     
@@ -246,19 +193,7 @@ let Setup (parsed:ParseResults<Arguments>) (subCommand:Arguments) =
         (Some [GeneratePackages.Name; ValidatePackages.Name; GenerateApiChanges.Name])
         ignore
 
-    step PristineCheck.Name pristineCheck
     step GeneratePackages.Name generatePackages 
     step ValidatePackages.Name validatePackages 
-    step GenerateReleaseNotes.Name generateReleaseNotes
     step GenerateApiChanges.Name generateApiChanges
-    cmd Release.Name
-        (Some [PristineCheck.Name; Build.Name;])
-        (Some [GeneratePackages.Name; ValidatePackages.Name; GenerateReleaseNotes.Name; GenerateApiChanges.Name])
-        <| fun _ -> release parsed
-        
-    step CreateReleaseOnGithub.Name createReleaseOnGithub 
     step PublishContainers.Name publishContainers
-    cmd Publish.Name
-        (Some [Release.Name])
-        (Some [CreateReleaseOnGithub.Name; PublishContainers.Name])
-        <| fun _ -> publish parsed
