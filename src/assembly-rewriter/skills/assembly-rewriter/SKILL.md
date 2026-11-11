@@ -17,15 +17,15 @@ namespace: rewriting `Nest.dll` to `Nest620.dll` turns every `Nest.*` type, `lds
 
 ```bash
 # one assembly
-assembly-rewriter -i lib/Nest.dll -o out/Nest620.dll
+assembly-rewriter rewrite -i lib/Nest.dll -o out/Nest620.dll
 
 # an assembly and the dependency it shares with the other version: rewrite both in one call,
 # so Nest620 references Elasticsearch.Net620 instead of Elasticsearch.Net
-assembly-rewriter -i lib/Nest.dll -o out/Nest620.dll -i lib/Elasticsearch.Net.dll -o out/Elasticsearch.Net620.dll
+assembly-rewriter rewrite -i lib/Nest.dll -o out/Nest620.dll -i lib/Elasticsearch.Net.dll -o out/Elasticsearch.Net620.dll
 
 # dependencies that are not rewritten but must resolve, a strong-name key, or one merged assembly
-assembly-rewriter -i a/Foo.dll -o out/Foo2.dll -r packages/deps -k key.snk
-assembly-rewriter -i a/Foo.dll -o out/Foo2.dll -i a/Foo.Core.dll -o out/Foo2.Core.dll -m -k key.snk
+assembly-rewriter rewrite -i a/Foo.dll -o out/Foo2.dll -r packages/deps -k key.snk
+assembly-rewriter rewrite -i a/Foo.dll -o out/Foo2.dll -i a/Foo.Core.dll -o out/Foo2.Core.dll -m -k key.snk
 ```
 
 ## Gotchas
