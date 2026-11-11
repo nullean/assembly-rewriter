@@ -1,4 +1,4 @@
-﻿using AssemblyRewriter;
+using AssemblyRewriter;
 using Nullean.Argh;
 
 var app = new ArghApp();
