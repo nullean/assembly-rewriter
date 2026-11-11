@@ -13,12 +13,10 @@
 
   <!-- build/scripts -->
   <ItemGroup>
-    <PackageVersion Include="Argu" Version="6.0.0" />
-    <PackageVersion Include="Bullseye" Version="3.3.0" />
-    <PackageVersion Include="Fake.Tools.Git" Version="5.15.0" />
-    <!-- under CPM the F# SDK adds no implicit FSharp.Core; this is the one the SDK resolved before -->
+    <!-- Nullean.Make.Fs needs 11.0.100 or later; this is the one the SDK resolved before -->
     <PackageVersion Include="FSharp.Core" Version="11.0.101" />
-    <PackageVersion Include="Proc" Version="0.14.0" />
-    <PackageVersion Include="Proc.Fs" Version="0.14.0" />
+    <PackageVersion Include="Nullean.Make.Fs" Version="0.25.0" />
+    <!-- the current release, which Nullean.Make.Fs would otherwise resolve at its 0.17.0 floor -->
+    <PackageVersion Include="Proc.Fs" Version="0.18.0" />
   </ItemGroup>
 </Project>

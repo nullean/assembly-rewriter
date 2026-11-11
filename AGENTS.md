@@ -10,7 +10,7 @@ Action (`action.yml`, which runs that image).
 | Path | What |
 |---|---|
 | `src/assembly-rewriter` | the tool (net8.0 and net10.0; native AOT per RID, plus a portable `any` fallback) |
-| `build/scripts` | the F# build the `mise` tasks call |
+| `build/scripts` | the F# build ([Nullean.Make.Fs](https://www.nuget.org/packages/Nullean.Make.Fs), net11.0) the `mise` tasks call |
 | `action.yml` | the GitHub Action, running the `edge` container image |
 
 ## Commands
@@ -45,3 +45,6 @@ release label. The [releasing](.claude/skills/releasing/SKILL.md) and
   patches it after `dotnet pack` copies the unsigned one.
 - `create-major-tag.yml` moves the `v<major>` tag on every published release, so `uses: nullean/assembly-rewriter@v0`
   keeps working.
+- Build targets are Make.Fs `target { }` blocks in `build/scripts/Program.fs` whose commands are Proc.Fs `sh $"…"`
+  lines; values come from `text`/`lines` inside `shell { }` (`build/scripts/Versions.fs`). Do not call the C#
+  `ProcNet` API from the build.
