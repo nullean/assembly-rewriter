@@ -8,6 +8,7 @@ open Bullseye
 open CommandLine
 open Fake.Tools.Git
 open ProcNet
+open Proc.Fs
 
     
 let exec binary args =
@@ -42,8 +43,8 @@ let private clean (arguments:ParseResults<Arguments>) =
     if (Paths.Output.Exists) then Paths.Output.Delete (true)
     // clean every project but this build itself: `dotnet clean` on the solution would delete the assemblies the
     // running build still loads lazily (Fake, Proc) and fail the next target
-    Directory.EnumerateFiles("src", "*.?sproj", SearchOption.AllDirectories)
-    |> Seq.iter (fun p -> exec "dotnet" ["clean"; p; "-c"; "Release"; "-v"; "q"])
+    for project in Directory.EnumerateFiles("src", "*.?sproj", SearchOption.AllDirectories) do
+        shell { exec "dotnet" ["clean"; project; "-c"; "Release"; "-v"; "q"] } |> ignore
     
 let private build (arguments:ParseResults<Arguments>) = exec "dotnet" ["build"; "-c"; "Release"] |> ignore
 
