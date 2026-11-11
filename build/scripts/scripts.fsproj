@@ -6,11 +6,12 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Argu" Version="6.0.0" />
-    <PackageReference Include="Bullseye" Version="3.3.0" />
-    <PackageReference Include="Proc" Version="0.14.0" />
-    <PackageReference Include="Proc.Fs" Version="0.14.0" />
-    <PackageReference Include="Fake.Tools.Git" Version="5.15.0" />
+    <PackageReference Include="FSharp.Core" />
+    <PackageReference Include="Argu" />
+    <PackageReference Include="Bullseye" />
+    <PackageReference Include="Proc" />
+    <PackageReference Include="Proc.Fs" />
+    <PackageReference Include="Fake.Tools.Git" />
   </ItemGroup>
 
   <ItemGroup>

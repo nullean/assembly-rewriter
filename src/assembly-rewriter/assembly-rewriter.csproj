@@ -18,14 +18,9 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\..\build\keys\keypair.snk</AssemblyOriginatorKeyFile>
 
-    <PackageIcon>nuget-icon.png</PackageIcon>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/nullean/assembly-rewriter</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/nullean/assembly-rewriter</PackageProjectUrl>
-    <PackageReleaseNotes>https://github.com/nullean/assembly-rewriter/releases</PackageReleaseNotes>
-
     <Title>assembly-rewriter: a dotnet tool to rewrite assembly namespaces</Title>
-    <Description>Diff assemblies and nuget packages</Description>
+    <Description>Rewrites the top-level namespace of .NET assemblies, and the references between them, so two versions of the same assembly can be referenced side by side.</Description>
+    <PackageTags>dotnet-tool;assembly;rewrite;namespace;mono-cecil;side-by-side;versioning</PackageTags>
 
     <!-- Native-AOT tool packaging: one package per RID plus an 'any' framework-dependent fallback.
          The root package's DotnetToolSettings.xml (v2) maps each RID to its per-RID package.
@@ -48,16 +43,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\..\nuget-icon.png" CopyToOutputDirectory="PreserveNewest">
-      <Link>nuget-icon.png</Link>
-      <Pack>True</Pack>
-      <PackagePath>nuget-icon.png</PackagePath>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Nullean.Argh" Version="0.18.0" />
-    <PackageReference Include="ILRepack.Lib" Version="2.0.18" />
-    <PackageReference Include="Mono.Cecil" Version="0.11.3" />
+    <PackageReference Include="Nullean.Argh" />
+    <PackageReference Include="ILRepack.Lib" />
+    <PackageReference Include="Mono.Cecil" />
   </ItemGroup>
 </Project>
