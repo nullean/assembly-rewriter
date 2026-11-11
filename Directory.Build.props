@@ -26,14 +26,16 @@
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
-  <!-- the org icon, the README and the agent skill (skills/<name>/SKILL.md) go into the package -->
+  <!-- the org icon, each project's README.md and the agent skill (skills/<name>/SKILL.md) go into the package.
+       The root README.md is GitHub's and uses HTML, which nuget.org does not render. -->
   <ItemGroup Condition="'$(IsPackable)' != 'false'">
     <None Include="$(MSBuildThisFileDirectory)nuget-icon.png" Pack="true" PackagePath="\" Visible="false" />
-    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="$(MSBuildProjectDirectory)/README.md" Pack="true" PackagePath="\" Visible="false"
+          Condition="Exists('$(MSBuildProjectDirectory)/README.md')" />
     <!-- https://devblogs.microsoft.com/dotnet/delivering-skills-in-nuget-packages/ -->
     <None Include="$(MSBuildProjectDirectory)/skills/**/*" Pack="true" PackagePath="skills/" Visible="false" />
   </ItemGroup>
-  <PropertyGroup Condition="'$(IsPackable)' != 'false'">
+  <PropertyGroup Condition="'$(IsPackable)' != 'false' And Exists('$(MSBuildProjectDirectory)/README.md')">
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 </Project>
