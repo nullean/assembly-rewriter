@@ -15,7 +15,9 @@ zizmor = "1"
 
 [tasks.setup]
 description = "Restore the local .NET tools"
-run = "dotnet tool restore"
+# dotnet/sdk#53783: on a cold tool cache (every fresh CI runner) restoring several RID-specific tool packages can
+# misattribute one package's commands to another. The cache is warm after the first attempt, so one retry succeeds.
+run = "dotnet tool restore || dotnet tool restore"
 
 [tasks.build]
 description = "Build the solution"
