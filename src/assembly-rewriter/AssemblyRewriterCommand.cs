@@ -20,7 +20,8 @@ internal sealed class AssemblyRewriterCommands
 		List<string>? resolveDir = null,
 		string? keyFile = null,
 		bool merge = false,
-		bool verbose = false)
+		bool verbose = false
+	)
 	{
 		if (input.Count != output.Count)
 		{
@@ -53,7 +54,8 @@ internal sealed class AssemblyRewriterCommands
 			return 1;
 		}
 
-		if (!merge) return 0;
+		if (!merge)
+			return 0;
 
 		try
 		{

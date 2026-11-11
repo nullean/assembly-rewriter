@@ -21,7 +21,8 @@ mise installs the SDK pinned in `global.json` (plus the .NET 10 runtime the buil
 mise run build    # build the solution
 mise run pack     # build, pack the root and `any` packages, validate them, report public API changes
 mise run ci       # exactly what CI runs: build, then pack (there are no tests)
-mise run check    # workflow security checks (zizmor)
+mise run format   # format the repository with curb
+mise run check    # formatting drift (curb) and workflow security checks (zizmor); CI runs the curb half
 mise run release  # show the release draft; `mise run release publish` releases
 ```
 
