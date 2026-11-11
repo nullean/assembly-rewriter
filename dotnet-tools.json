@@ -19,6 +19,13 @@
       "commands": [
         "assembly-differ"
       ]
+    },
+    "curb-cli": {
+      "version": "0.14.0",
+      "commands": [
+        "curb"
+      ],
+      "rollForward": false
     }
   }
 }

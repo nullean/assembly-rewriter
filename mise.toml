@@ -24,9 +24,15 @@ description = "Build the solution"
 depends = ["setup"]
 run = "dotnet run --project build/scripts -- build"
 
+[tasks.format]
+description = "Format the repository with curb"
+depends = ["setup"]
+run = "dotnet curb format ."
+
 [tasks.check]
-description = "Fail on workflow findings (zizmor)"
-run = "zizmor --min-severity medium ."
+description = "Fail on formatting drift (curb) and on workflow findings (zizmor)"
+depends = ["setup"]
+run = ["dotnet curb check .", "zizmor --min-severity medium ."]
 
 [tasks.pack]
 description = "Build, pack the root and portable tool packages, validate them and report public API changes"
@@ -38,9 +44,9 @@ description = "Delete build output"
 run = "dotnet run --project build/scripts -- clean"
 
 [tasks.ci]
-description = "Exactly what CI runs on every push: build, then pack (there are no tests)"
+description = "Exactly what CI runs on every push: build, pack (there are no tests), then fail on formatting drift (curb)"
 depends = ["setup"]
-run = "dotnet run --project build/scripts -- ci"
+run = ["dotnet run --project build/scripts -- ci", "dotnet curb check ."]
 
 [tasks.release]
 description = "Open the release-drafter draft; `mise run release publish` publishes it, which releases"
