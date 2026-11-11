@@ -94,7 +94,7 @@ Select-String -Path <rewritten>.il -Pattern '<original namespace>\.' -AllMatches
     args: -i Nest.dll -o Nest620.dll
 ```
 
-The action runs `assembly-rewriter <args>` in the prebuilt, distroless `ghcr.io/nullean/assembly-rewriter:edge`
+The action runs `assembly-rewriter rewrite <args>` in the prebuilt, distroless `ghcr.io/nullean/assembly-rewriter:edge`
 container, so the workflow needs no .NET SDK. `args` is the whole command line, since every path is an `-i`/`-o` pair.
 The container's working directory is the workflow's checkout. Container actions run on Linux runners only.
 
