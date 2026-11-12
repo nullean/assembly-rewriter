@@ -94,16 +94,17 @@ Select-String -Path <rewritten>.il -Pattern '<original namespace>\.' -AllMatches
     args: -i Nest.dll -o Nest620.dll
 ```
 
-The action runs `assembly-rewriter <args>` in the prebuilt, distroless `ghcr.io/nullean/assembly-rewriter:edge`
-container, so the workflow needs no .NET SDK. `args` is the whole command line, since every path is an `-i`/`-o` pair.
-The container's working directory is the workflow's checkout. Container actions run on Linux runners only.
+The action runs `assembly-rewriter rewrite <args>` in the prebuilt, distroless
+`ghcr.io/nullean/assembly-rewriter:edge` container, so the workflow needs no .NET SDK. `args` is the rest of the command
+line, since every path is an `-i`/`-o` pair. The container's working directory is the workflow's checkout. Container
+actions run on Linux runners only.
 
 ### Container
 
 The same image works anywhere `docker run` does, such as GitLab CI or a machine without the .NET SDK:
 
 ```sh
-docker run --rm -v "$(pwd)":/workspace ghcr.io/nullean/assembly-rewriter:edge -i /workspace/Nest.dll -o /workspace/Nest620.dll
+docker run --rm -v "$(pwd)":/workspace ghcr.io/nullean/assembly-rewriter:edge rewrite -i /workspace/Nest.dll -o /workspace/Nest620.dll
 ```
 
 It is native-AOT on a chiseled `runtime-deps` base, with no shell, running as a non-root user. `edge` tracks the latest
