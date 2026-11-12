@@ -104,7 +104,7 @@ let main argv =
                   |> Seq.head
               let package = Paths.RootRelative package.FullName
               let version = Versions.informational.Value
-              sh $"dotnet nupkg-validator {package} -v {version} -a {Paths.ToolName} -k 96c599bbe3e70f5d --allow-roll-forward" }
+              sh $"dotnet nupkg-validator validate {package} -v {version} -a {Paths.ToolName} -k 96c599bbe3e70f5d" }
         // The plain "assembly-rewriter" package id is just a DotnetToolSettings.xml v2 shim pointing at per-RID
         // sub-packages (see generatepackages) - it ships no managed assembly of its own, so NuGetAssemblyProvider would
         // find 0 assemblies there. The portable, signed managed build lives in "assembly-rewriter.any" instead.

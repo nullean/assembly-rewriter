@@ -11,7 +11,7 @@ let current =
         // failing with "The command ... is not contained in the package ...". The cache is warm after the first attempt,
         // so one retry always succeeds.
         sh $"dotnet tool restore" |> Cmd.retry 1
-        let! version = text $"dotnet minver --default-pre-release-phase canary"
+        let! version = text $"dotnet minver --default-pre-release-identifiers canary.0"
         return version
     })
 

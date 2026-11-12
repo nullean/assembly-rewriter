@@ -58,7 +58,7 @@ jobs:
       - name: Build container image (no push)
         if: matrix.rid == 'linux-x64'
         shell: bash
-        run: dotnet run --project build/scripts -- publishcontainers -s true
+        run: dotnet run --project build/scripts -- publishcontainers -s
 
       - name: Report container image size
         if: matrix.rid == 'linux-x64'
@@ -74,7 +74,7 @@ jobs:
           if-no-files-found: error
 
   zizmor:
-    uses: nullean/.github/.github/workflows/zizmor.yml@83ef343759c443afe1964e9c33327527f8677b05 # v1.3.0
+    uses: nullean/.github/.github/workflows/zizmor.yml@d850ce6eee9efa9f81b410d15fcd480409518d19 # v1.5.0
     permissions:
       contents: read
 
@@ -127,7 +127,7 @@ jobs:
     # publishContainers/containerImageTags in Targets.fs for how that split is decided.
     - name: Log in to ghcr.io
       if: github.event_name == 'push' || github.event_name == 'release'
-      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+      uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -135,7 +135,7 @@ jobs:
 
     - name: Publish container image
       if: github.event_name == 'push' || github.event_name == 'release'
-      run: dotnet run --project build/scripts -- publishcontainers -s true --push
+      run: dotnet run --project build/scripts -- publishcontainers -s --push
 
     - name: Check the packages carry the release version
       if: github.event_name == 'release'

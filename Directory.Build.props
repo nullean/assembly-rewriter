@@ -1,10 +1,11 @@
 <Project>
   <PropertyGroup>
-    <MinVerDefaultPreReleasePhase>canary</MinVerDefaultPreReleasePhase>
+    <MinVerDefaultPreReleaseIdentifiers>canary.0</MinVerDefaultPreReleaseIdentifiers>
     <MinVerMinimumMajorMinor>0.2</MinVerMinimumMajorMinor>
   </PropertyGroup>
 
-  <ItemGroup>
+  <!-- versions the packages; build/scripts is not packed and has no use for it -->
+  <ItemGroup Condition="'$(IsPackable)' != 'false'">
     <PackageReference Include="MinVer">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
