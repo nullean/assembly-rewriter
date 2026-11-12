@@ -5,10 +5,11 @@ branding:
   color: 'blue'
 inputs:
   args:
-    description: 'Arguments passed through to assembly-rewriter verbatim, e.g. "-i Nest.dll -o Nest620.dll"'
+    description: 'Arguments passed through to `assembly-rewriter rewrite` verbatim, e.g. "-i Nest.dll -o Nest620.dll"'
     required: true
 runs:
   using: 'docker'
   image: 'docker://ghcr.io/nullean/assembly-rewriter:edge'
   args:
+    - rewrite
     - ${{ inputs.args }}
