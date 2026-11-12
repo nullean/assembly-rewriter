@@ -108,11 +108,11 @@ let main argv =
         // The plain "assembly-rewriter" package id is just a DotnetToolSettings.xml v2 shim pointing at per-RID
         // sub-packages (see generatepackages) - it ships no managed assembly of its own, so NuGetAssemblyProvider would
         // find 0 assemblies there. The portable, signed managed build lives in "assembly-rewriter.any" instead.
-        // `-a true`: don't fail a first-ever diff when "assembly-rewriter.any" has no previous version on nuget.org.
+        // `-a`: don't fail a first-ever diff when "assembly-rewriter.any" has no previous version on nuget.org.
         | Generateapichanges -> target [] {
               let version = Versions.current.Value
               // quoted: an unquoted | would pipe
-              sh $"dotnet assembly-differ 'previous-nuget|{Paths.ToolName}.any|{version}|net10.0' 'directory|src/{Paths.ToolName}/bin/Release/net10.0' -a true --target {Paths.ToolName} -f github-comment --output {output}" }
+              sh $"dotnet assembly-differ diff 'previous-nuget|{Paths.ToolName}.any|{version}|net10.0' 'directory|src/{Paths.ToolName}/bin/Release/net10.0' -a --target {Paths.ToolName} -f github-comment --output {output}" }
         // Publishes the CLI's native-AOT build as a container image via the .NET SDK's own container
         // support (`dotnet publish -t:PublishContainer`), the same mechanism used for curb — see
         // https://github.com/nullean/curb/pull/72. linux-x64 only for now; a second RID becomes a second
