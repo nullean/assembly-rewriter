@@ -8,15 +8,15 @@
     <PackageVersion Include="ILRepack.Lib" Version="2.0.48" />
     <PackageVersion Include="MinVer" Version="8.0.0" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
-    <PackageVersion Include="Nullean.Argh" Version="0.28.0" />
+    <PackageVersion Include="Nullean.Argh" Version="0.30.0" />
   </ItemGroup>
 
   <!-- build/scripts -->
   <ItemGroup>
     <!-- Nullean.Make.Fs needs 11.0.100 or later; this is the one the SDK resolved before -->
     <PackageVersion Include="FSharp.Core" Version="11.0.101" />
-    <PackageVersion Include="Nullean.Make.Fs" Version="0.28.0" />
+    <PackageVersion Include="Nullean.Make.Fs" Version="0.30.0" />
     <!-- build/scripts opens Proc.Fs directly -->
-    <PackageVersion Include="Proc.Fs" Version="0.21.0" />
+    <PackageVersion Include="Proc.Fs" Version="0.22.1" />
   </ItemGroup>
 </Project>
