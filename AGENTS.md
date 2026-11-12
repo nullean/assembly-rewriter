@@ -9,13 +9,13 @@ Action (`action.yml`, which runs that image).
 
 | Path | What |
 |---|---|
-| `src/assembly-rewriter` | the tool (net8.0 and net10.0; native AOT per RID, plus a portable `any` fallback) |
+| `src/assembly-rewriter` | the tool (net10.0 and net11.0; native AOT per RID, plus a portable `any` fallback) |
 | `build/scripts` | the F# build ([Nullean.Make.Fs](https://www.nuget.org/packages/Nullean.Make.Fs), net11.0) the `mise` tasks call |
 | `action.yml` | the GitHub Action, running the `edge` container image |
 
 ## Commands
 
-mise installs the SDK pinned in `global.json` (plus the .NET 10 runtime the build runs on). Run everything through it:
+mise installs the SDK pinned in `global.json`. Run everything through it:
 
 ```bash
 mise run build    # build the solution

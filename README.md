@@ -118,7 +118,7 @@ The tool ships as one package per platform. Install the root package; the .NET S
 |---|---|---|
 | [`assembly-rewriter`](src/assembly-rewriter/README.md) | the tool; points the SDK at the package for your platform | [![NuGet](https://img.shields.io/nuget/v/assembly-rewriter?style=flat-square)](https://www.nuget.org/packages/assembly-rewriter) |
 | `assembly-rewriter.<rid>` | the native-AOT build for `linux-x64`, `linux-arm64`, `win-x64`, `win-arm64` and `osx-arm64` | [![NuGet](https://img.shields.io/nuget/v/assembly-rewriter.linux-x64?style=flat-square)](https://www.nuget.org/packages/assembly-rewriter.linux-x64) |
-| `assembly-rewriter.any` | the framework-dependent fallback (net8.0, net10.0) for every other platform | [![NuGet](https://img.shields.io/nuget/v/assembly-rewriter.any?style=flat-square)](https://www.nuget.org/packages/assembly-rewriter.any) |
+| `assembly-rewriter.any` | the framework-dependent fallback (net10.0, net11.0) for every other platform | [![NuGet](https://img.shields.io/nuget/v/assembly-rewriter.any?style=flat-square)](https://www.nuget.org/packages/assembly-rewriter.any) |
 
 The packages also carry an agent skill (`skills/assembly-rewriter/SKILL.md`).
 

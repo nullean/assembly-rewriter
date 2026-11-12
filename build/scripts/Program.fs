@@ -128,11 +128,11 @@ let main argv =
         // does log in, passes --push.
         | Publishcontainers -> target [] {
               let project = Paths.RootRelative Paths.ToolProject.FullName
-              let baseImage = "mcr.microsoft.com/dotnet/runtime-deps:10.0-noble-chiseled"
+              let baseImage = "mcr.microsoft.com/dotnet/runtime-deps:11.0-resolute-chiseled"
               // the quotes are part of the value: MSBuild would otherwise split the tags on `;`
               let tags = $"ContainerImageTags=\"{Versions.containerImageTags.Value}\""
               let publish =
-                  [ "publish"; project; "-c"; "Release"; "-f"; "net10.0"; "-r"; "linux-x64"; "/t:PublishContainer"
+                  [ "publish"; project; "-c"; "Release"; "-f"; "net11.0"; "-r"; "linux-x64"; "/t:PublishContainer"
                     "-p"; "DebugType=none"; "-p"; $"ContainerBaseImage={baseImage}"
                     "-p"; $"ContainerRepository={Paths.Repository}"; "-p"; tags; "-p"; "ContainerUser=1001:1001" ]
               if push.Value then
