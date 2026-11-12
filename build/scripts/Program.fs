@@ -75,8 +75,8 @@ let main argv =
               for project in Directory.EnumerateFiles("src", "*.?sproj", SearchOption.AllDirectories) do
                   sh $"dotnet clean {project} -c Release -v q" }
         | Build -> command {
-              composes [Clean]
-              executes (shell { sh $"dotnet build -c Release" }) }
+              composes [Clean] }
+                   |> executes { sh $"dotnet build -c Release" }
         | Pack -> command { requires [Build]; composes [Generatepackages; Validatepackages; Generateapichanges] }
         // no tests yet, so CI runs exactly what pack does
         | Ci -> command { requires [Build]; composes [Generatepackages; Validatepackages; Generateapichanges] }
