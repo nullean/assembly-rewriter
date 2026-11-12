@@ -3,25 +3,25 @@
   "isRoot": true,
   "tools": {
     "minver-cli": {
-      "version": "4.3.0",
+      "version": "8.0.0",
       "commands": [
         "minver"
       ]
     },
-    "nupkg-validator": {
-      "version": "0.10.1",
-      "commands": [
-        "nupkg-validator"
-      ]
-    },
     "assembly-differ": {
-      "version": "0.16.0",
+      "version": "0.18.2",
       "commands": [
         "assembly-differ"
       ]
     },
+    "nupkg-validator": {
+      "version": "0.11.5",
+      "commands": [
+        "nupkg-validator"
+      ]
+    },
     "curb-cli": {
-      "version": "0.14.0",
+      "version": "0.14.1",
       "commands": [
         "curb"
       ],
