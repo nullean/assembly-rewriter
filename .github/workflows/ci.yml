@@ -38,7 +38,7 @@ jobs:
           fetch-depth: 0 # MinVer computes the version from tag history
           persist-credentials: false
 
-      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+      - uses: jdx/mise-action@90f833d396d0cc3674b631d2d225e306476c303a # v5.2.10
         with:
           cache: false # this workflow publishes what it builds; never restore a cache a PR could have written
         env:
@@ -74,7 +74,7 @@ jobs:
           if-no-files-found: error
 
   zizmor:
-    uses: nullean/.github/.github/workflows/zizmor.yml@d850ce6eee9efa9f81b410d15fcd480409518d19 # v1.5.0
+    uses: nullean/.github/.github/workflows/zizmor.yml@e21d5f59405aa7078e51825cd4c407191e28562f # v1.6.1
     permissions:
       contents: read
 
@@ -92,7 +92,7 @@ jobs:
         fetch-depth: 0 # MinVer computes the version from tag history
         persist-credentials: false
 
-    - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+    - uses: jdx/mise-action@90f833d396d0cc3674b631d2d225e306476c303a # v5.2.10
       with:
         cache: false # a release never restores a cache PR builds could have written
       env:
