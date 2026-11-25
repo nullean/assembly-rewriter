@@ -8,7 +8,7 @@
     <PackageVersion Include="ILRepack.Lib" Version="2.0.48" />
     <PackageVersion Include="MinVer" Version="8.0.0" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
-    <PackageVersion Include="Nullean.Argh" Version="0.30.0" />
+    <PackageVersion Include="Nullean.Argh" Version="0.30.1" />
   </ItemGroup>
 
   <!-- build/scripts -->
