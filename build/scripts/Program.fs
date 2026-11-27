@@ -2,7 +2,7 @@ module Program
 
 open System.IO
 open System.IO.Compression
-open Nullean.Make.Fs
+open Nullean.Runna.Fs
 open Proc.Fs
 
 /// The build's targets; `dotnet run --project build/scripts -- --help` lists them with these descriptions
@@ -62,7 +62,7 @@ let private keepRootAndAnyPackages (staging: string) =
 
 [<EntryPoint>]
 let main argv =
-    let app = MakeApp<Target>("dotnet run --project build/scripts --", None)
+    let app = RunnaApp<Target>("dotnet run --project build/scripts --", None)
     let push =
         app.Flag("--push", desc = "publishcontainers only: push the built image to ghcr.io instead of building it into the local Docker daemon")
 

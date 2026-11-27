@@ -13,9 +13,9 @@
 
   <!-- build/scripts -->
   <ItemGroup>
-    <!-- Nullean.Make.Fs needs 11.0.100 or later; this is the one the SDK resolved before -->
+    <!-- Runna.Fs needs 11.0.100 or later; this is the one the SDK resolved before -->
     <PackageVersion Include="FSharp.Core" Version="11.0.101" />
-    <PackageVersion Include="Nullean.Make.Fs" Version="0.30.0" />
+    <PackageVersion Include="Runna.Fs" Version="0.2.1" />
     <!-- build/scripts opens Proc.Fs directly -->
     <PackageVersion Include="Proc.Fs" Version="0.22.1" />
   </ItemGroup>
